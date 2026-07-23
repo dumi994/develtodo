@@ -1,0 +1,2328 @@
+<!doctype html>
+<html lang="it" x-data="app()" :class="darkMode ? 'dark' : ''">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DevelTodo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: "class",
+        theme: {
+          extend: {
+            fontFamily: { sans: ["Inter", "system-ui", "sans-serif"] },
+            colors: {
+              brand: {
+                50: "#eff6ff",
+                100: "#dbeafe",
+                200: "#bfdbfe",
+                300: "#93c5fd",
+                400: "#60a5fa",
+                500: "#3b82f6",
+                600: "#2563eb",
+                700: "#1d4ed8",
+                800: "#1e40af",
+                900: "#1e3a8a",
+              },
+            },
+          },
+        },
+      };
+    </script>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap"
+      rel="stylesheet"
+    />
+    <script
+      defer
+      src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"
+    ></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+    <style>
+      [x-cloak] {
+        display: none !important;
+      }
+      body {
+        font-family: "Inter", system-ui, sans-serif;
+      }
+      .card {
+        background: #fff;
+        border: 1px solid #e5e7eb;
+        border-radius: 16px;
+        transition:
+          box-shadow 0.2s,
+          transform 0.2s;
+      }
+      .card:hover {
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+      }
+      .dark .card {
+        background: #111827;
+        border-color: #1f2937;
+      }
+      .dark .card:hover {
+        box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        font-weight: 600;
+        font-size: 13px;
+        padding: 8px 16px;
+        border-radius: 10px;
+        transition: all 0.15s;
+        cursor: pointer;
+        border: none;
+      }
+      .btn-primary {
+        background: #3b82f6;
+        color: #fff;
+      }
+      .btn-primary:hover {
+        background: #2563eb;
+      }
+      .btn-success {
+        background: #10b981;
+        color: #fff;
+      }
+      .btn-success:hover {
+        background: #059669;
+      }
+      .btn-ghost {
+        background: transparent;
+        color: #6b7280;
+      }
+      .btn-ghost:hover {
+        background: #f3f4f6;
+      }
+      .dark .btn-ghost {
+        color: #9ca3af;
+      }
+      .dark .btn-ghost:hover {
+        background: #1f2937;
+      }
+      .badge {
+        font-size: 10px;
+        font-weight: 700;
+        padding: 2px 8px;
+        border-radius: 20px;
+        display: inline-block;
+      }
+      .input {
+        width: 100%;
+        padding: 8px 12px;
+        font-size: 13px;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        background: transparent;
+        outline: none;
+        transition: border-color 0.15s;
+      }
+      .input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+      }
+      .dark .input {
+        border-color: #374151;
+        color: #fff;
+      }
+      .fade-in {
+        animation: fadeIn 0.3s ease;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(8px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .pulse {
+        animation: pulse 2s infinite;
+      }
+      @keyframes pulse {
+        0%,
+        100% {
+          opacity: 1;
+        }
+        50% {
+          opacity: 0.5;
+        }
+      }
+      .scroll-thin::-webkit-scrollbar {
+        width: 5px;
+      }
+      .scroll-thin::-webkit-scrollbar-thumb {
+        background: #cbd5e1;
+        border-radius: 5px;
+      }
+      .dark .scroll-thin::-webkit-scrollbar-thumb {
+        background: #374151;
+      }
+      .nav-item {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        padding: 10px 14px;
+        border-radius: 10px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.15s;
+        border-left: 3px solid transparent;
+      }
+      .nav-item:hover {
+        background: #f9fafb;
+      }
+      .dark .nav-item:hover {
+        background: #1f2937;
+      }
+      .nav-item.active {
+        background: #eff6ff;
+        color: #2563eb;
+        border-left-color: #3b82f6;
+      }
+      .dark .nav-item.active {
+        background: #1e3a5f;
+        color: #60a5fa;
+      }
+      .progress-bar {
+        height: 6px;
+        border-radius: 3px;
+        overflow: hidden;
+        background: #e5e7eb;
+      }
+      .dark .progress-bar {
+        background: #374151;
+      }
+      .progress-fill {
+        height: 100%;
+        border-radius: 3px;
+        transition: width 0.5s ease;
+      }
+      .timer-display {
+        font-family: "Inter", monospace;
+        font-variant-numeric: tabular-nums;
+        font-size: 11px;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body class="bg-gray-50 dark:bg-gray-950 text-gray-900 dark:text-gray-100">
+    <div class="flex h-screen overflow-hidden">
+      <!-- ===== SIDEBAR ===== -->
+      <aside
+        class="w-60 flex-shrink-0 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col"
+      >
+        <div
+          class="h-16 flex items-center px-5 border-b border-gray-100 dark:border-gray-800"
+        >
+          <span
+            class="text-xl font-extrabold tracking-tight bg-gradient-to-r from-blue-600 to-indigo-500 bg-clip-text text-transparent"
+          >
+            DevelTodo
+          </span>
+        </div>
+        <nav class="flex-1 py-4 px-3 space-y-1 overflow-y-auto scroll-thin">
+          <template x-for="item in navItems" :key="item.id">
+            <div
+              @click="currentView = item.id"
+              :class="currentView === item.id ? 'nav-item active' : 'nav-item'"
+              class="nav-item"
+            >
+              <span x-html="item.icon" class="text-lg"></span>
+              <span x-text="item.label"></span>
+            </div>
+          </template>
+        </nav>
+        <div class="p-3 border-t border-gray-100 dark:border-gray-800">
+          <div class="flex items-center gap-3 px-2">
+            <div
+              class="w-8 h-8 rounded-full bg-gradient-to-br from-blue-500 to-indigo-600 flex items-center justify-center text-white text-xs font-bold"
+            >
+              M
+            </div>
+            <div>
+              <p class="text-sm font-semibold">Marco</p>
+              <p class="text-[10px] text-gray-400">Developer</p>
+            </div>
+          </div>
+        </div>
+      </aside>
+
+      <!-- ===== MAIN ===== -->
+      <div class="flex-1 flex flex-col min-w-0">
+        <!-- Header -->
+        <header
+          class="h-16 flex-shrink-0 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between px-6"
+        >
+          <div>
+            <h1 class="text-lg font-bold" x-text="currentViewLabel"></h1>
+            <p class="text-xs text-gray-400" x-text="currentDate"></p>
+          </div>
+          <div class="flex items-center gap-3">
+            <!-- Search -->
+            <div class="relative" @click.outside="searchOpen = false">
+              <input
+                type="text"
+                x-model="searchQuery"
+                @focus="searchOpen = true"
+                placeholder="Cerca..."
+                class="w-48 pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-900 transition"
+              />
+              <svg
+                class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+                />
+              </svg>
+              <div
+                x-show="searchOpen && searchQuery.length > 1"
+                x-cloak
+                class="absolute top-full mt-2 left-0 w-full bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-64 overflow-y-auto fade-in"
+              >
+                <template x-for="r in searchResults" :key="r.id">
+                  <div
+                    @click="currentView = r.view; searchQuery = ''; searchOpen = false"
+                    class="p-3 border-b border-gray-100 dark:border-gray-700/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-3"
+                  >
+                    <span x-text="r.icon" class="text-base"></span>
+                    <div>
+                      <p class="text-sm font-medium" x-text="r.title"></p>
+                      <p class="text-[10px] text-gray-400" x-text="r.sub"></p>
+                    </div>
+                  </div>
+                </template>
+                <div
+                  x-show="searchResults.length === 0"
+                  class="p-4 text-center text-xs text-gray-400"
+                >
+                  Nessun risultato
+                </div>
+              </div>
+            </div>
+            <!-- Notifications -->
+            <div class="relative" @click.outside="notifOpen = false">
+              <button
+                @click="notifOpen = !notifOpen"
+                class="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+              >
+                <svg
+                  class="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"
+                  />
+                </svg>
+                <span
+                  x-show="unreadNotifs > 0"
+                  class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4 h-4 flex items-center justify-center"
+                  x-text="unreadNotifs"
+                ></span>
+              </button>
+              <div
+                x-show="notifOpen"
+                x-cloak
+                class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-80 overflow-y-auto fade-in"
+              >
+                <div
+                  class="p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center"
+                >
+                  <span class="font-semibold text-sm">Notifiche</span>
+                  <button
+                    @click="notifications.forEach(n => n.read = true)"
+                    class="text-xs text-blue-600 hover:underline"
+                  >
+                    Tutte lette
+                  </button>
+                </div>
+                <template x-for="n in notifications" :key="n.id">
+                  <div
+                    @click="n.read = true"
+                    :class="n.read ? 'opacity-50' : 'bg-blue-50 dark:bg-blue-900/10'"
+                    class="p-3 border-b border-gray-100 dark:border-gray-700/30 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30"
+                  >
+                    <div class="flex gap-3">
+                      <span x-text="n.icon" class="text-base"></span>
+                      <div>
+                        <p class="text-sm font-medium" x-text="n.title"></p>
+                        <p class="text-xs text-gray-400" x-text="n.time"></p>
+                      </div>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+            <!-- Dark mode -->
+            <button
+              @click="darkMode = !darkMode; localStorage.setItem('theme', darkMode ? 'dark' : 'light')"
+              class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition"
+            >
+              <svg
+                x-show="!darkMode"
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+                />
+              </svg>
+              <svg
+                x-show="darkMode"
+                class="w-5 h-5"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                  stroke-width="2"
+                  d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+                />
+              </svg>
+            </button>
+          </div>
+        </header>
+
+        <!-- Content -->
+        <main class="flex-1 overflow-y-auto p-6 scroll-thin">
+          <!-- ===== DASHBOARD ===== -->
+          <div x-show="currentView === 'dashboard'" class="fade-in space-y-6">
+            <!-- Stats cards -->
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div class="card p-5">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-2xl">📁</span>
+                  <span
+                    class="text-xs text-emerald-600 font-semibold"
+                    x-text="'+' + stats.newProjects"
+                  ></span>
+                </div>
+                <p
+                  class="text-3xl font-extrabold"
+                  x-text="stats.activeProjects"
+                ></p>
+                <p class="text-xs text-gray-400 mt-1">Progetti attivi</p>
+              </div>
+              <div class="card p-5">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-2xl">📋</span>
+                  <span
+                    class="text-xs text-amber-600 font-semibold"
+                    x-text="stats.dueToday + ' oggi'"
+                  ></span>
+                </div>
+                <p class="text-3xl font-extrabold" x-text="stats.openTasks"></p>
+                <p class="text-xs text-gray-400 mt-1">Task aperti</p>
+              </div>
+              <div class="card p-5">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-2xl">🎫</span>
+                  <span
+                    class="text-xs text-red-600 font-semibold"
+                    x-text="stats.highPriorityTickets + ' urgenti'"
+                  ></span>
+                </div>
+                <p
+                  class="text-3xl font-extrabold"
+                  x-text="stats.openTickets"
+                ></p>
+                <p class="text-xs text-gray-400 mt-1">Ticket aperti</p>
+              </div>
+              <div class="card p-5">
+                <div class="flex items-center justify-between mb-2">
+                  <span class="text-2xl">💰</span>
+                  <span
+                    class="text-xs text-emerald-600 font-semibold"
+                    x-text="'€' + stats.totalUnpaid.toLocaleString()"
+                  ></span>
+                </div>
+                <p
+                  class="text-3xl font-extrabold"
+                  x-text="stats.overdueInvoices"
+                ></p>
+                <p class="text-xs text-gray-400 mt-1">Fatture in ritardo</p>
+              </div>
+            </div>
+
+            <!-- Timeline + Quotes -->
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+              <div class="lg:col-span-2 card p-5">
+                <h3 class="font-bold text-sm mb-4 flex items-center gap-2">
+                  📅 Prossime scadenze
+                </h3>
+                <div class="relative pl-2">
+                  <div
+                    class="absolute left-[11px] top-2 bottom-2 w-0.5 bg-gray-200 dark:bg-gray-700"
+                  ></div>
+                  <div class="space-y-5">
+                    <template x-for="item in upcomingDeadlines" :key="item.id">
+                      <div class="relative pl-8">
+                        <div
+                          class="absolute left-0 top-0.5 w-[23px] h-[23px] rounded-full border-4 border-white dark:border-gray-900 shadow-md flex items-center justify-center"
+                          :style="'background:' + item.color"
+                        ></div>
+                        <div class="flex items-center justify-between">
+                          <div>
+                            <p
+                              class="text-sm font-semibold"
+                              x-text="item.title"
+                            ></p>
+                            <p
+                              class="text-xs text-gray-400"
+                              x-text="item.project"
+                            ></p>
+                          </div>
+                          <span
+                            :class="item.urgent ? 'text-red-500 pulse font-bold' : 'text-gray-400'"
+                            class="text-xs font-medium"
+                            x-text="item.daysLeft"
+                          ></span>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </div>
+              <div class="card p-5">
+                <h3 class="font-bold text-sm mb-4 flex items-center gap-2">
+                  📄 Preventivi in attesa
+                </h3>
+                <div class="space-y-3">
+                  <template x-for="p in pendingQuotes" :key="p.id">
+                    <div class="p-3 rounded-xl bg-gray-50 dark:bg-gray-800/50">
+                      <div class="flex justify-between items-start mb-1">
+                        <p class="text-sm font-semibold" x-text="p.client"></p>
+                        <span
+                          :class="p.expiring ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300' : 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300'"
+                          class="badge"
+                          x-text="p.status"
+                        ></span>
+                      </div>
+                      <p
+                        class="text-xs text-gray-400"
+                        x-text="'€ ' + p.amount.toLocaleString() + ' · ' + p.waitingDays + ' giorni'"
+                      ></p>
+                    </div>
+                  </template>
+                </div>
+              </div>
+            </div>
+
+            <!-- Chart -->
+            <div class="card p-5">
+              <h3 class="font-bold text-sm mb-4">
+                📊 Task completati (ultimi 7 giorni)
+              </h3>
+              <div style="height: 200px"><canvas id="prodChart"></canvas></div>
+            </div>
+          </div>
+
+          <!-- ===== PROGETTI ===== -->
+          <div x-show="currentView === 'projects'" class="fade-in space-y-6">
+            <div class="flex justify-between items-center">
+              <p
+                class="text-sm text-gray-400"
+                x-text="projects.length + ' progetti'"
+              ></p>
+              <button @click="openModal('project')" class="btn btn-primary">
+                + Nuovo progetto
+              </button>
+            </div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <template x-for="p in projects" :key="p.id">
+                <div class="card p-5">
+                  <div class="flex items-center justify-between mb-3">
+                    <div class="flex items-center gap-2">
+                      <span
+                        class="w-3 h-3 rounded-full"
+                        :style="'background:' + p.color"
+                      ></span>
+                      <span
+                        class="badge"
+                        :class="p.statusClass"
+                        x-text="p.statusLabel"
+                      ></span>
+                    </div>
+                    <span
+                      class="text-xs text-gray-400"
+                      x-text="p.dueDate"
+                    ></span>
+                  </div>
+                  <h4 class="font-bold text-base" x-text="p.name"></h4>
+                  <p class="text-xs text-gray-400 mt-1" x-text="p.client"></p>
+                  <div
+                    class="mt-4 flex justify-between text-xs text-gray-400 mb-1.5"
+                  >
+                    <span
+                      x-text="p.doneTasks + '/' + p.totalTasks + ' task'"
+                    ></span>
+                    <span
+                      class="font-semibold"
+                      x-text="p.progress + '%'"
+                    ></span>
+                  </div>
+                  <div class="progress-bar">
+                    <div
+                      class="progress-fill"
+                      :style="'width:' + p.progress + '%;background:' + p.color"
+                    ></div>
+                  </div>
+                  <!-- Ore stimate vs effettive -->
+                  <div class="mt-3 flex items-center justify-between text-xs">
+                    <span class="text-gray-400">⏱ Tempo</span>
+                    <span
+                      class="font-semibold"
+                      :class="projectActualHours(p) > p.estimatedHours ? 'text-red-500' : 'text-gray-600 dark:text-gray-300'"
+                      x-text="formatTime(projectActualHours(p)) + ' / ' + p.estimatedHours + 'h'"
+                    ></span>
+                  </div>
+                  <!-- Barra ore -->
+                  <div class="progress-bar mt-1.5">
+                    <div
+                      class="progress-fill"
+                      :style="'width:' + Math.min(100, (projectActualHours(p) / (p.estimatedHours * 3600)) * 100) + '%;background:' + (projectActualHours(p) > p.estimatedHours * 3600 ? '#ef4444' : p.color)"
+                    ></div>
+                  </div>
+                  <div
+                    class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800 flex items-center justify-between"
+                  >
+                    <select
+                      x-model="p.status"
+                      @change="onProjectStatusChange(p)"
+                      class="text-xs border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 bg-transparent focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="in_arrivo">In arrivo</option>
+                      <option value="in_corso">In corso</option>
+                      <option value="in_revisione">In revisione</option>
+                      <option value="completato">Completato</option>
+                      <option value="archiviato">Archiviato</option>
+                    </select>
+                    <button
+                      x-show="p.status !== 'completato' && p.status !== 'archiviato'"
+                      @click="advanceProjectStatus(p)"
+                      class="btn btn-primary text-[11px] py-1 px-3"
+                    >
+                      Avanza →
+                    </button>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- ===== TASKS ===== -->
+          <div x-show="currentView === 'tasks'" class="fade-in space-y-6">
+            <div class="flex items-center justify-between flex-wrap gap-3">
+              <div
+                class="flex gap-1 bg-gray-100 dark:bg-gray-800 rounded-xl p-1"
+              >
+                <button
+                  @click="taskView = 'list'"
+                  :class="taskView === 'list' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+                  class="px-4 py-2 rounded-lg text-xs font-semibold transition"
+                >
+                  Lista
+                </button>
+                <button
+                  @click="taskView = 'kanban'"
+                  :class="taskView === 'kanban' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+                  class="px-4 py-2 rounded-lg text-xs font-semibold transition"
+                >
+                  Kanban
+                </button>
+                <button
+                  @click="taskView = 'calendar'"
+                  :class="taskView === 'calendar' ? 'bg-white dark:bg-gray-700 shadow-sm' : ''"
+                  class="px-4 py-2 rounded-lg text-xs font-semibold transition"
+                >
+                  Calendario
+                </button>
+              </div>
+              <button @click="openModal('task')" class="btn btn-primary">
+                + Nuovo task
+              </button>
+            </div>
+
+            <!-- Lista -->
+            <div x-show="taskView === 'list'" class="space-y-4">
+              <div class="flex gap-2 flex-wrap">
+                <template
+                  x-for="f in ['Tutti','Alta priorità','In scadenza','Completati']"
+                  :key="f"
+                >
+                  <button
+                    @click="taskFilter = f"
+                    :class="taskFilter === f ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800'"
+                    class="px-3 py-1.5 text-xs rounded-lg font-semibold transition"
+                  >
+                    {{f}}
+                  </button>
+                </template>
+              </div>
+              <div class="space-y-2">
+                <template x-for="t in filteredTasks" :key="t.id">
+                  <div class="card p-4 flex items-center gap-4">
+                    <input
+                      type="checkbox"
+                      :checked="t.done"
+                      @change="toggleTaskDone(t)"
+                      class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-2 focus:ring-blue-500 cursor-pointer"
+                    />
+                    <div class="flex-1 min-w-0">
+                      <p
+                        :class="t.done ? 'line-through text-gray-400' : ''"
+                        class="text-sm font-semibold"
+                        x-text="t.title"
+                      ></p>
+                      <div class="flex gap-2 mt-1.5 flex-wrap items-center">
+                        <span
+                          class="badge"
+                          :class="t.priorityClass"
+                          x-text="t.priority"
+                        ></span>
+                        <span
+                          x-show="t.project"
+                          class="text-[10px] text-gray-400 bg-gray-100 dark:bg-gray-800 px-2 py-0.5 rounded-md"
+                          x-text="t.project"
+                        ></span>
+                        <span
+                          :class="t.dueUrgent ? 'text-red-500 pulse font-bold' : 'text-gray-400'"
+                          class="text-[10px]"
+                          x-text="t.dueLabel"
+                        ></span>
+                      </div>
+                      <!-- Subtask con checkbox cliccabili -->
+                      <div
+                        x-show="t.subtasks.length > 0"
+                        class="mt-2 space-y-1"
+                      >
+                        <template x-for="(s, si) in t.subtasks" :key="si">
+                          <div class="flex items-center gap-2">
+                            <input
+                              type="checkbox"
+                              :checked="s.done"
+                              @change="toggleSubtask(t, si)"
+                              class="w-3.5 h-3.5 rounded border-gray-300 text-blue-600 focus:ring-1 focus:ring-blue-500 cursor-pointer"
+                            />
+                            <span
+                              :class="s.done ? 'line-through text-gray-400' : 'text-gray-600 dark:text-gray-300'"
+                              class="text-[11px]"
+                              x-text="s.title || ('Subtask ' + (si+1))"
+                            ></span>
+                          </div>
+                        </template>
+                        <!-- Barra avanzamento subtask -->
+                        <div class="flex items-center gap-2 mt-1.5">
+                          <div class="progress-bar flex-1" style="height: 4px">
+                            <div
+                              class="progress-fill"
+                              :style="'width:' + (t.subtasks.filter(s => s.done).length / t.subtasks.length * 100) + '%;background:#10b981'"
+                            ></div>
+                          </div>
+                          <span
+                            class="text-[10px] text-gray-400 font-medium"
+                            x-text="t.subtasks.filter(s => s.done).length + '/' + t.subtasks.length"
+                          ></span>
+                        </div>
+                      </div>
+                    </div>
+                    <!-- Timer -->
+                    <div class="flex items-center gap-2 flex-shrink-0">
+                      <span
+                        class="timer-display"
+                        :class="t.timerRunning ? 'text-blue-600' : 'text-gray-400'"
+                        x-text="formatTime(t.elapsed)"
+                      ></span>
+                      <button
+                        @click.stop="toggleTimer(t)"
+                        class="w-8 h-8 rounded-lg flex items-center justify-center transition"
+                        :class="t.timerRunning ? 'bg-red-100 text-red-600 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-300' : 'bg-gray-100 text-gray-500 hover:bg-gray-200 dark:bg-gray-800 dark:text-gray-400'"
+                      >
+                        <span x-text="t.timerRunning ? '⏸' : '▶'"></span>
+                      </button>
+                    </div>
+                    <button
+                      @click="openModal('task')"
+                      class="text-gray-300 hover:text-blue-600 transition p-1"
+                    >
+                      ✎
+                    </button>
+                  </div>
+                </template>
+              </div>
+            </div>
+
+            <!-- Kanban -->
+            <div
+              x-show="taskView === 'kanban'"
+              class="grid grid-cols-1 md:grid-cols-3 gap-4"
+            >
+              <template
+                x-for="(col, ci) in ['Da fare', 'In corso', 'Fatto']"
+                :key="col"
+              >
+                <div
+                  class="bg-gray-100 dark:bg-gray-800/30 rounded-2xl p-4 min-h-[400px]"
+                >
+                  <h4 class="text-sm font-bold mb-4 flex items-center gap-2">
+                    <span x-text="col"></span>
+                    <span
+                      class="text-xs text-gray-400 font-normal"
+                      x-text="tasks.filter(t => t.kanbanCol === col).length"
+                    ></span>
+                  </h4>
+                  <div class="space-y-2">
+                    <template
+                      x-for="t in tasks.filter(tk => tk.kanbanCol === col)"
+                      :key="t.id"
+                    >
+                      <div class="card p-3">
+                        <p class="text-sm font-semibold" x-text="t.title"></p>
+                        <div class="flex gap-1 mt-2">
+                          <span
+                            class="badge"
+                            :class="t.priorityClass"
+                            x-text="t.priority"
+                          ></span>
+                        </div>
+                        <div
+                          class="flex items-center justify-between mt-3 pt-2 border-t border-gray-100 dark:border-gray-800"
+                        >
+                          <button
+                            x-show="ci > 0"
+                            @click="moveKanban(t, -1)"
+                            class="text-xs text-gray-400 hover:text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/10 transition"
+                          >
+                            ←
+                          </button>
+                          <span
+                            class="text-[10px] text-gray-300"
+                            x-text="col"
+                          ></span>
+                          <button
+                            x-show="ci < 2"
+                            @click="moveKanban(t, 1)"
+                            class="text-xs text-gray-400 hover:text-blue-600 px-2 py-1 rounded-lg hover:bg-blue-50 dark:hover:bg-blue-900/10 transition"
+                          >
+                            →
+                          </button>
+                        </div>
+                      </div>
+                    </template>
+                  </div>
+                </div>
+              </template>
+            </div>
+
+            <!-- Calendario -->
+            <div x-show="taskView === 'calendar'" class="card p-5">
+              <div class="flex justify-between items-center mb-4">
+                <button
+                  @click="calMonth--"
+                  class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+                >
+                  ←
+                </button>
+                <span
+                  class="font-bold text-sm capitalize"
+                  x-text="calMonthName"
+                ></span>
+                <button
+                  @click="calMonth++"
+                  class="p-2 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition"
+                >
+                  →
+                </button>
+              </div>
+              <div
+                class="grid grid-cols-7 gap-1 text-center text-xs font-semibold text-gray-400 mb-2"
+              >
+                <template
+                  x-for="d in ['Lun','Mar','Mer','Gio','Ven','Sab','Dom']"
+                  :key="d"
+                >
+                  <span x-text="d"></span>
+                </template>
+              </div>
+              <div class="grid grid-cols-7 gap-1">
+                <template x-for="(day, idx) in calDays" :key="idx">
+                  <div
+                    :class="day.today ? 'bg-blue-100 dark:bg-blue-900/20 ring-2 ring-blue-500 font-bold' : day.hasTasks ? 'bg-gray-50 dark:bg-gray-800/50' : ''"
+                    class="aspect-square rounded-lg text-xs flex items-center justify-center relative"
+                  >
+                    <span x-text="day.num"></span>
+                    <div
+                      x-show="day.hasTasks"
+                      class="absolute bottom-1 left-1/2 -translate-x-1/2"
+                    >
+                      <span
+                        class="w-1.5 h-1.5 rounded-full bg-blue-500 block"
+                      ></span>
+                    </div>
+                  </div>
+                </template>
+              </div>
+            </div>
+          </div>
+
+          <!-- ===== TICKET ===== -->
+          <div x-show="currentView === 'tickets'" class="fade-in space-y-6">
+            <div class="flex justify-between items-center">
+              <p
+                class="text-sm text-gray-400"
+                x-text="tickets.length + ' ticket'"
+              ></p>
+              <button @click="openModal('ticket')" class="btn btn-primary">
+                + Nuovo ticket
+              </button>
+            </div>
+            <div class="space-y-2">
+              <template x-for="t in tickets" :key="t.id">
+                <div class="card">
+                  <div
+                    @click="selectedTicket = selectedTicket === t.id ? null : t.id"
+                    class="p-4 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-800/30 rounded-2xl transition flex items-center justify-between"
+                  >
+                    <div class="flex items-center gap-3 flex-1 min-w-0">
+                      <span
+                        class="badge flex-shrink-0"
+                        :class="t.priority === 'Alta' ? 'bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300' : t.priority === 'Media' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'"
+                        x-text="t.priority"
+                      ></span>
+                      <div class="min-w-0">
+                        <p
+                          class="text-sm font-semibold truncate"
+                          x-text="t.subject"
+                        ></p>
+                        <p
+                          class="text-xs text-gray-400 truncate"
+                          x-text="t.client + ' · ' + t.categoryLabel + ' · ' + t.lastUpdate"
+                        ></p>
+                      </div>
+                    </div>
+                    <div class="flex items-center gap-3 flex-shrink-0">
+                      <span
+                        class="badge"
+                        :class="t.status === 'Aperto' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300' : t.status === 'In lavorazione' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300'"
+                        x-text="t.status"
+                      ></span>
+                      <svg
+                        :class="selectedTicket === t.id ? 'rotate-180' : ''"
+                        class="w-4 h-4 text-gray-400 transition-transform"
+                        fill="none"
+                        stroke="currentColor"
+                        viewBox="0 0 24 24"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M19 9l-7 7-7-7"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                  <div
+                    x-show="selectedTicket === t.id"
+                    class="border-t border-gray-100 dark:border-gray-800 p-4 space-y-3"
+                  >
+                    <div class="grid grid-cols-2 gap-4 text-sm">
+                      <div>
+                        <span class="text-xs text-gray-400 block">Cliente</span>
+                        <span class="font-semibold" x-text="t.client"></span>
+                      </div>
+                      <div>
+                        <span class="text-xs text-gray-400 block">
+                          Categoria
+                        </span>
+                        <span
+                          class="font-semibold"
+                          x-text="t.categoryLabel"
+                        ></span>
+                      </div>
+                      <div>
+                        <span class="text-xs text-gray-400 block">
+                          Priorità
+                        </span>
+                        <span class="font-semibold" x-text="t.priority"></span>
+                      </div>
+                      <div>
+                        <span class="text-xs text-gray-400 block">
+                          Ultimo agg.
+                        </span>
+                        <span
+                          class="font-semibold"
+                          x-text="t.lastUpdate"
+                        ></span>
+                      </div>
+                    </div>
+                    <div x-show="t.notes">
+                      <span class="text-xs text-gray-400 block mb-1">Note</span>
+                      <p
+                        class="text-sm bg-gray-50 dark:bg-gray-800/50 p-3 rounded-xl"
+                        x-text="t.notes"
+                      ></p>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs text-gray-400">
+                      <span>Stato:</span>
+                      <select
+                        x-model="t.status"
+                        class="text-xs border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 bg-transparent focus:ring-2 focus:ring-blue-500"
+                      >
+                        <option>Aperto</option>
+                        <option>In lavorazione</option>
+                        <option>Chiuso</option>
+                      </select>
+                    </div>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- ===== PREVENTIVI ===== -->
+          <div x-show="currentView === 'quotes'" class="fade-in space-y-6">
+            <div class="flex justify-between items-center">
+              <p
+                class="text-sm text-gray-400"
+                x-text="quotes.length + ' preventivi'"
+              ></p>
+              <button @click="openModal('quote')" class="btn btn-primary">
+                + Nuovo preventivo
+              </button>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <template x-for="q in quotes" :key="q.id">
+                <div class="card p-5">
+                  <div class="flex justify-between items-start mb-2">
+                    <div>
+                      <h4 class="font-bold text-sm" x-text="q.client"></h4>
+                      <p
+                        class="text-xs text-gray-400 mt-0.5"
+                        x-text="q.description"
+                      ></p>
+                    </div>
+                    <span
+                      class="badge"
+                      :class="q.statusClass"
+                      x-text="q.statusLabel"
+                    ></span>
+                  </div>
+                  <div class="mt-3 flex items-center justify-between">
+                    <span
+                      class="text-2xl font-extrabold"
+                      x-text="'€ ' + q.amount.toLocaleString()"
+                    ></span>
+                    <span
+                      :class="q.expired ? 'text-red-500 pulse font-bold' : 'text-gray-400'"
+                      class="text-xs"
+                      x-text="'Scade: ' + q.expiryDate"
+                    ></span>
+                  </div>
+                  <div
+                    class="mt-3 flex items-center gap-1.5 text-xs text-gray-400"
+                  >
+                    <svg
+                      class="w-4 h-4"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                        stroke-width="2"
+                        d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"
+                      />
+                    </svg>
+                    <span>preventivo.pdf</span>
+                  </div>
+                  <div
+                    x-show="q.status === 'accettato'"
+                    class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-800"
+                  >
+                    <button
+                      @click="createInvoiceFromQuote(q)"
+                      class="btn btn-success w-full justify-center"
+                    >
+                      Crea fattura da preventivo
+                    </button>
+                  </div>
+                  <div
+                    class="mt-3 flex items-center gap-2 text-xs text-gray-400"
+                  >
+                    <span>Stato:</span>
+                    <select
+                      x-model="q.status"
+                      @change="onQuoteStatusChange(q)"
+                      class="text-xs border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 bg-transparent focus:ring-2 focus:ring-blue-500"
+                    >
+                      <option value="bozza">Bozza</option>
+                      <option value="inviato">Inviato</option>
+                      <option value="accettato">Accettato</option>
+                      <option value="rifiutato">Rifiutato</option>
+                      <option value="fatturato">Fatturato</option>
+                    </select>
+                  </div>
+                </div>
+              </template>
+            </div>
+          </div>
+
+          <!-- ===== FATTURE ===== -->
+          <div x-show="currentView === 'invoices'" class="fade-in space-y-6">
+            <div class="flex justify-between items-center">
+              <p
+                class="text-sm text-gray-400"
+                x-text="invoices.length + ' fatture'"
+              ></p>
+              <button @click="openModal('invoice')" class="btn btn-primary">
+                + Nuova fattura
+              </button>
+            </div>
+            <div class="card overflow-hidden">
+              <div class="overflow-x-auto">
+                <table class="w-full text-sm">
+                  <thead>
+                    <tr
+                      class="text-left text-gray-400 text-xs border-b border-gray-200 dark:border-gray-800 bg-gray-50 dark:bg-gray-800/30"
+                    >
+                      <th class="p-4 font-semibold">#</th>
+                      <th class="p-4 font-semibold">Cliente</th>
+                      <th class="p-4 font-semibold">Importo</th>
+                      <th class="p-4 font-semibold">Scadenza</th>
+                      <th class="p-4 font-semibold">Stato</th>
+                      <th class="p-4 font-semibold"></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <template x-for="inv in invoices" :key="inv.id">
+                      <tr
+                        :class="inv.overdue ? 'bg-red-50 dark:bg-red-900/5' : ''"
+                        class="border-b border-gray-100 dark:border-gray-800/50 hover:bg-gray-50 dark:hover:bg-gray-800/20 transition"
+                      >
+                        <td
+                          class="p-4 text-gray-400"
+                          x-text="'#' + inv.number"
+                        ></td>
+                        <td class="p-4 font-semibold" x-text="inv.client"></td>
+                        <td
+                          class="p-4"
+                          x-text="'€ ' + inv.amount.toLocaleString()"
+                        ></td>
+                        <td
+                          :class="inv.overdue ? 'text-red-500 pulse font-bold' : ''"
+                          class="p-4"
+                          x-text="inv.dueDate"
+                        ></td>
+                        <td class="p-4">
+                          <span
+                            class="badge"
+                            :class="inv.statusClass"
+                            x-text="inv.statusLabel"
+                          ></span>
+                        </td>
+                        <td class="p-4">
+                          <select
+                            x-model="inv.status"
+                            class="text-xs border border-gray-200 dark:border-gray-700 rounded-lg px-2 py-1 bg-transparent focus:ring-2 focus:ring-blue-500"
+                          >
+                            <option value="da_fare">Da fare</option>
+                            <option value="inviata">Inviata</option>
+                            <option value="pagata">Pagata</option>
+                            <option value="sollecito">Sollecito</option>
+                          </select>
+                        </td>
+                      </tr>
+                    </template>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- ===== MODAL ===== -->
+    <div
+      x-show="modalOpen"
+      @click.self="modalOpen = false"
+      class="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4"
+    >
+      <div
+        class="bg-white dark:bg-gray-900 rounded-2xl max-w-md w-full p-6 shadow-2xl border border-gray-200 dark:border-gray-800 fade-in"
+      >
+        <div class="flex justify-between items-center mb-5">
+          <h3 class="text-lg font-bold" x-text="modalTitle"></h3>
+          <button
+            @click="modalOpen = false"
+            class="p-1 hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg text-gray-400 transition"
+          >
+            &times;
+          </button>
+        </div>
+        <div class="space-y-4">
+          <template x-for="field in modalFields" :key="field.name">
+            <div>
+              <label
+                class="block text-xs font-semibold mb-1.5 text-gray-500"
+                x-text="field.label"
+              ></label>
+              <template x-if="field.type === 'select'">
+                <select class="input">
+                  <template x-for="opt in field.options" :key="opt">
+                    <option x-text="opt"></option>
+                  </template>
+                </select>
+              </template>
+              <template x-if="field.type === 'textarea'">
+                <textarea
+                  rows="3"
+                  :placeholder="field.placeholder"
+                  class="input"
+                ></textarea>
+              </template>
+              <template x-if="field.type === 'file'">
+                <div
+                  class="border-2 border-dashed border-gray-300 dark:border-gray-600 rounded-xl p-6 text-center cursor-pointer hover:border-blue-500 transition"
+                >
+                  <svg
+                    class="w-10 h-10 mx-auto text-gray-400"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
+                    <path
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                      stroke-width="2"
+                      d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"
+                    />
+                  </svg>
+                  <p class="text-xs text-gray-400 mt-2">
+                    Clicca per caricare PDF
+                  </p>
+                </div>
+              </template>
+              <template x-if="!field.type || field.type === 'text'">
+                <input
+                  type="text"
+                  :placeholder="field.placeholder"
+                  class="input"
+                />
+              </template>
+            </div>
+          </template>
+          <div class="flex gap-2 justify-end pt-2">
+            <button @click="modalOpen = false" class="btn btn-ghost">
+              Annulla
+            </button>
+            <button @click="modalOpen = false" class="btn btn-primary">
+              Salva
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      function app() {
+        return {
+          chartInstance: null,
+          timerInterval: null,
+          darkMode: localStorage.getItem("theme") === "dark",
+          currentView: "dashboard",
+          notifOpen: false,
+          selectedTicket: null,
+          searchOpen: false,
+          searchQuery: "",
+          taskView: "list",
+          taskFilter: "Tutti",
+          calMonth: new Date().getMonth(),
+          calYear: new Date().getFullYear(),
+          modalOpen: false,
+          modalTitle: "",
+          modalFields: [],
+
+          init() {
+            var self = this;
+            setTimeout(function () {
+              self.buildChart();
+            }, 500);
+          },
+
+          get currentViewLabel() {
+            var l = {
+              dashboard: "Dashboard",
+              projects: "Progetti",
+              tasks: "Task",
+              tickets: "Ticket",
+              quotes: "Preventivi",
+              invoices: "Fatture",
+            };
+            return l[this.currentView] || "Dashboard";
+          },
+          get currentDate() {
+            return new Date().toLocaleDateString("it-IT", {
+              weekday: "long",
+              year: "numeric",
+              month: "long",
+              day: "numeric",
+            });
+          },
+
+          navItems: [
+            { id: "dashboard", label: "Dashboard", icon: "📊" },
+            { id: "projects", label: "Progetti", icon: "📁" },
+            { id: "tasks", label: "Task", icon: "📋" },
+            { id: "tickets", label: "Ticket", icon: "🎫" },
+            { id: "quotes", label: "Preventivi", icon: "📄" },
+            { id: "invoices", label: "Fatture", icon: "💰" },
+          ],
+
+          get searchResults() {
+            if (this.searchQuery.length < 2) return [];
+            var q = this.searchQuery.toLowerCase(),
+              res = [];
+            for (var i = 0; i < this.projects.length; i++) {
+              if (this.projects[i].name.toLowerCase().indexOf(q) !== -1)
+                res.push({
+                  icon: "📁",
+                  title: this.projects[i].name,
+                  sub: this.projects[i].client,
+                  view: "projects",
+                  id: "p" + i,
+                });
+            }
+            for (var j = 0; j < this.tasks.length; j++) {
+              if (this.tasks[j].title.toLowerCase().indexOf(q) !== -1)
+                res.push({
+                  icon: "📋",
+                  title: this.tasks[j].title,
+                  sub: this.tasks[j].project || "",
+                  view: "tasks",
+                  id: "t" + j,
+                });
+            }
+            for (var k = 0; k < this.tickets.length; k++) {
+              if (
+                this.tickets[k].subject.toLowerCase().indexOf(q) !== -1 ||
+                this.tickets[k].client.toLowerCase().indexOf(q) !== -1
+              )
+                res.push({
+                  icon: "🎫",
+                  title: this.tickets[k].subject,
+                  sub: this.tickets[k].client,
+                  view: "tickets",
+                  id: "ti" + k,
+                });
+            }
+            return res;
+          },
+
+          stats: {
+            activeProjects: 8,
+            newProjects: 2,
+            openTasks: 24,
+            dueToday: 5,
+            openTickets: 12,
+            highPriorityTickets: 4,
+            overdueInvoices: 3,
+            totalUnpaid: 12450,
+          },
+
+          notifications: [
+            {
+              id: 1,
+              icon: "⏰",
+              title: 'Task "Fix header" scade oggi',
+              time: "Tra 2 ore",
+              read: false,
+            },
+            {
+              id: 2,
+              icon: "💰",
+              title: "Fattura #042 in ritardo",
+              time: "3 giorni fa",
+              read: false,
+            },
+            {
+              id: 3,
+              icon: "📄",
+              title: "Preventivo in attesa da 7 giorni",
+              time: "Ieri",
+              read: false,
+            },
+            {
+              id: 4,
+              icon: "🎫",
+              title: "Ticket non aggiornato da 4 giorni",
+              time: "2 giorni fa",
+              read: true,
+            },
+            {
+              id: 5,
+              icon: "📋",
+              title: 'Progetto "E-commerce" in scadenza',
+              time: "Domani",
+              read: true,
+            },
+          ],
+          get unreadNotifs() {
+            var c = 0;
+            for (var i = 0; i < this.notifications.length; i++) {
+              if (!this.notifications[i].read) c++;
+            }
+            return c;
+          },
+
+          upcomingDeadlines: [
+            {
+              id: 1,
+              title: "Fix header responsive",
+              project: "Sito Web Agency",
+              color: "#ef4444",
+              daysLeft: "Oggi",
+              urgent: true,
+            },
+            {
+              id: 2,
+              title: "Implementare checkout",
+              project: "E-commerce",
+              color: "#f59e0b",
+              daysLeft: "Domani",
+              urgent: true,
+            },
+            {
+              id: 3,
+              title: "Test invio email",
+              project: "WebApp CRM",
+              color: "#3b82f6",
+              daysLeft: "3 giorni",
+              urgent: false,
+            },
+            {
+              id: 4,
+              title: "Deploy staging",
+              project: "Portfolio",
+              color: "#10b981",
+              daysLeft: "5 giorni",
+              urgent: false,
+            },
+            {
+              id: 5,
+              title: "Collaudo finale",
+              project: "Blog Plus",
+              color: "#8b5cf6",
+              daysLeft: "7 giorni",
+              urgent: false,
+            },
+          ],
+          pendingQuotes: [
+            {
+              id: 1,
+              client: "Alessio Rinaldi",
+              amount: 3200,
+              status: "In attesa",
+              waitingDays: 7,
+              expiring: true,
+            },
+            {
+              id: 2,
+              client: "Tech Solutions",
+              amount: 5800,
+              status: "In attesa",
+              waitingDays: 3,
+              expiring: false,
+            },
+            {
+              id: 3,
+              client: "Studio Legale Bianchi",
+              amount: 2100,
+              status: "In attesa",
+              waitingDays: 10,
+              expiring: true,
+            },
+          ],
+
+          projects: [
+            {
+              id: 1,
+              name: "Sito Web Agency",
+              client: "Creative Lab",
+              color: "#3b82f6",
+              status: "in_corso",
+              statusClass:
+                "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
+              statusLabel: "In corso",
+              dueDate: "25/07/2026",
+              doneTasks: 8,
+              totalTasks: 12,
+              progress: 65,
+              estimatedHours: 40,
+            },
+            {
+              id: 2,
+              name: "E-commerce",
+              client: "TechShop SRL",
+              color: "#f59e0b",
+              status: "in_revisione",
+              statusClass:
+                "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+              statusLabel: "In revisione",
+              dueDate: "30/07/2026",
+              doneTasks: 17,
+              totalTasks: 20,
+              progress: 85,
+              estimatedHours: 60,
+            },
+            {
+              id: 3,
+              name: "WebApp CRM",
+              client: "WebStudio",
+              color: "#10b981",
+              status: "in_corso",
+              statusClass:
+                "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
+              statusLabel: "In corso",
+              dueDate: "10/08/2026",
+              doneTasks: 7,
+              totalTasks: 20,
+              progress: 35,
+              estimatedHours: 80,
+            },
+            {
+              id: 4,
+              name: "Restyling Blog",
+              client: "Marco V.",
+              color: "#8b5cf6",
+              status: "in_arrivo",
+              statusClass:
+                "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+              statusLabel: "In arrivo",
+              dueDate: "01/09/2026",
+              doneTasks: 0,
+              totalTasks: 5,
+              progress: 0,
+              estimatedHours: 20,
+            },
+            {
+              id: 5,
+              name: "App Mobile",
+              client: "Startup XYZ",
+              color: "#ec4899",
+              status: "in_corso",
+              statusClass:
+                "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
+              statusLabel: "In corso",
+              dueDate: "05/08/2026",
+              doneTasks: 8,
+              totalTasks: 15,
+              progress: 50,
+              estimatedHours: 100,
+            },
+            {
+              id: 6,
+              name: "Portfolio",
+              client: "Me stesso",
+              color: "#14b8a6",
+              status: "completato",
+              statusClass:
+                "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+              statusLabel: "Completato",
+              dueDate: "15/06/2026",
+              doneTasks: 10,
+              totalTasks: 10,
+              progress: 100,
+              estimatedHours: 15,
+            },
+          ],
+
+          tasks: [
+            {
+              id: 1,
+              title: "Fix header responsive",
+              project: "Sito Web Agency",
+              priority: "Alta",
+              priorityClass:
+                "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300",
+              dueLabel: "Oggi",
+              dueUrgent: true,
+              done: false,
+              kanbanCol: "In corso",
+              subtasks: [
+                { title: "Analisi problema", done: true },
+                { title: "Fix CSS", done: false },
+                { title: "Test responsive", done: false },
+              ],
+              elapsed: 3720,
+              timerRunning: false,
+            },
+            {
+              id: 2,
+              title: "Implementare gateway pagamento",
+              project: "E-commerce",
+              priority: "Alta",
+              priorityClass:
+                "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300",
+              dueLabel: "Domani",
+              dueUrgent: true,
+              done: false,
+              kanbanCol: "Da fare",
+              subtasks: [
+                { title: "Scelta gateway", done: false },
+                { title: "Integrazione API", done: false },
+              ],
+              elapsed: 0,
+              timerRunning: false,
+            },
+            {
+              id: 3,
+              title: "Configurare invio email",
+              project: "WebApp CRM",
+              priority: "Media",
+              priorityClass:
+                "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+              dueLabel: "3 giorni",
+              dueUrgent: false,
+              done: false,
+              kanbanCol: "Da fare",
+              subtasks: [{ title: "Config SMTP", done: true }],
+              elapsed: 1800,
+              timerRunning: false,
+            },
+            {
+              id: 4,
+              title: "Testare form contatti",
+              project: "Sito Web Agency",
+              priority: "Bassa",
+              priorityClass:
+                "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+              dueLabel: "5 giorni",
+              dueUrgent: false,
+              done: true,
+              kanbanCol: "Fatto",
+              subtasks: [
+                { title: "Test desktop", done: true },
+                { title: "Test mobile", done: true },
+              ],
+              elapsed: 5400,
+              timerRunning: false,
+            },
+            {
+              id: 5,
+              title: "Creare endpoint API",
+              project: "App Mobile",
+              priority: "Media",
+              priorityClass:
+                "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+              dueLabel: "4 giorni",
+              dueUrgent: false,
+              done: false,
+              kanbanCol: "In corso",
+              subtasks: [
+                { title: "Setup route", done: false },
+                { title: "Implementazione", done: false },
+              ],
+              elapsed: 900,
+              timerRunning: false,
+            },
+            {
+              id: 6,
+              title: "Deploy su staging",
+              project: "Portfolio",
+              priority: "Bassa",
+              priorityClass:
+                "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+              dueLabel: "7 giorni",
+              dueUrgent: false,
+              done: false,
+              kanbanCol: "Da fare",
+              subtasks: [{ title: "Config server", done: false }],
+              elapsed: 0,
+              timerRunning: false,
+            },
+            {
+              id: 7,
+              title: "Collaudo carrello",
+              project: "E-commerce",
+              priority: "Alta",
+              priorityClass:
+                "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300",
+              dueLabel: "Domani",
+              dueUrgent: true,
+              done: false,
+              kanbanCol: "Da fare",
+              subtasks: [
+                { title: "Test carrello", done: false },
+                { title: "Fix bug pagamento", done: false },
+                { title: "Test checkout", done: false },
+              ],
+              elapsed: 0,
+              timerRunning: false,
+            },
+            {
+              id: 8,
+              title: "Scrivere test automatici",
+              project: "WebApp CRM",
+              priority: "Media",
+              priorityClass:
+                "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+              dueLabel: "6 giorni",
+              dueUrgent: false,
+              done: true,
+              kanbanCol: "Fatto",
+              subtasks: [
+                { title: "Unit test", done: true },
+                { title: "Integration test", done: true },
+                { title: "E2E test", done: true },
+              ],
+              elapsed: 7200,
+              timerRunning: false,
+            },
+          ],
+
+          get filteredTasks() {
+            if (this.taskFilter === "Tutti") return this.tasks;
+            if (this.taskFilter === "Alta priorità") {
+              return this.tasks.filter(function (t) {
+                return t.priority === "Alta";
+              });
+            }
+            if (this.taskFilter === "In scadenza") {
+              return this.tasks.filter(function (t) {
+                return t.dueUrgent;
+              });
+            }
+            if (this.taskFilter === "Completati") {
+              return this.tasks.filter(function (t) {
+                return t.done;
+              });
+            }
+            return this.tasks;
+          },
+
+          toggleTaskDone: function (t) {
+            t.done = !t.done;
+            t.kanbanCol = t.done ? "Fatto" : "Da fare";
+            this.calcProj(t.project);
+          },
+          toggleSubtask: function (t, si) {
+            // Toggle subtask
+            t.subtasks[si].done = !t.subtasks[si].done;
+            // Se tutte le subtask sono done → completa la task
+            var allDone = true;
+            for (var i = 0; i < t.subtasks.length; i++) {
+              if (!t.subtasks[i].done) {
+                allDone = false;
+                break;
+              }
+            }
+            if (allDone && !t.done) {
+              t.done = true;
+              t.kanbanCol = "Fatto";
+            } else if (!allDone && t.done) {
+              // Se era completata ma ora una subtask è stata smarcata
+              t.done = false;
+              t.kanbanCol = "In corso";
+            }
+            this.calcProj(t.project);
+          },
+          moveKanban: function (t, dir) {
+            var cols = ["Da fare", "In corso", "Fatto"];
+            var idx = cols.indexOf(t.kanbanCol);
+            var ni = Math.max(0, Math.min(2, idx + dir));
+            t.kanbanCol = cols[ni];
+            t.done = ni === 2;
+            this.calcProj(t.project);
+          },
+          calcProj: function (pn) {
+            if (!pn) return;
+            for (var i = 0; i < this.projects.length; i++) {
+              if (this.projects[i].name === pn) {
+                var pt = this.tasks.filter(function (t) {
+                  return t.project === pn;
+                });
+                this.projects[i].totalTasks = pt.length;
+                var done = pt.filter(function (t) {
+                  return t.done;
+                }).length;
+                this.projects[i].doneTasks = done;
+                // Progress basato su subtask completate, non solo task
+                var totalSubtasks = 0;
+                var doneSubtasks = 0;
+                for (var j = 0; j < pt.length; j++) {
+                  if (pt[j].subtasks && pt[j].subtasks.length > 0) {
+                    totalSubtasks += pt[j].subtasks.length;
+                    for (var k = 0; k < pt[j].subtasks.length; k++) {
+                      if (pt[j].subtasks[k].done) doneSubtasks++;
+                    }
+                  } else {
+                    // Task senza subtask: conta come 1 unità
+                    totalSubtasks += 1;
+                    if (pt[j].done) doneSubtasks += 1;
+                  }
+                }
+                this.projects[i].progress =
+                  totalSubtasks > 0
+                    ? Math.round((doneSubtasks / totalSubtasks) * 100)
+                    : 0;
+              }
+            }
+          },
+          projectActualHours: function (p) {
+            // Somma i secondi di tutti i task del progetto
+            var total = 0;
+            for (var i = 0; i < this.tasks.length; i++) {
+              if (this.tasks[i].project === p.name) {
+                total += this.tasks[i].elapsed || 0;
+              }
+            }
+            return total;
+          },
+          formatTime: function (sec) {
+            if (!sec || sec === 0) return "0m";
+            var h = Math.floor(sec / 3600);
+            var m = Math.floor((sec % 3600) / 60);
+            return h > 0 ? h + "h " + m + "m" : m + "m";
+          },
+          toggleTimer: function (t) {
+            if (t.timerRunning) {
+              t.timerRunning = false;
+              if (this.timerInterval) {
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+              }
+            } else {
+              if (this.timerInterval) {
+                clearInterval(this.timerInterval);
+                this.timerInterval = null;
+              }
+              for (var i = 0; i < this.tasks.length; i++) {
+                this.tasks[i].timerRunning = false;
+              }
+              t.timerRunning = true;
+              var self = this;
+              this.timerInterval = setInterval(function () {
+                t.elapsed = (t.elapsed || 0) + 1;
+              }, 1000);
+            }
+          },
+
+          tickets: [
+            {
+              id: 1,
+              subject: "Errore pagamento con carta",
+              client: "Marco Bianchi",
+              priority: "Alta",
+              category: "bug",
+              categoryLabel: "🐛 Bug",
+              status: "Aperto",
+              lastUpdate: "21/07/2026",
+              notes:
+                "Il cliente riceve errore 500 su Chrome. Su Edge funziona.",
+            },
+            {
+              id: 2,
+              subject: "Aggiungere campo Partita IVA",
+              client: "Studio Rossi",
+              priority: "Media",
+              category: "feature",
+              categoryLabel: "✨ Feature",
+              status: "In lavorazione",
+              lastUpdate: "18/07/2026",
+              notes:
+                "Aggiungere campo partita IVA nel modulo. Rilascio venerdì.",
+            },
+            {
+              id: 3,
+              subject: "Problema login da mobile",
+              client: "Luca Verdi",
+              priority: "Alta",
+              category: "bug",
+              categoryLabel: "🐛 Bug",
+              status: "Aperto",
+              lastUpdate: "22/07/2026",
+              notes: "Da smartphone il pulsante login non risponde.",
+            },
+            {
+              id: 4,
+              subject: "Richiesta manuale utente",
+              client: "Anna Neri",
+              priority: "Bassa",
+              category: "supporto",
+              categoryLabel: "❓ Supporto",
+              status: "Chiuso",
+              lastUpdate: "11/07/2026",
+              notes: "Richiesto manuale dashboard. Inviato via email.",
+            },
+          ],
+
+          quotes: [
+            {
+              id: 1,
+              client: "Alessio Rinaldi",
+              description: "Sito vetrina + blog",
+              amount: 3200,
+              status: "inviato",
+              statusClass:
+                "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+              statusLabel: "Inviato",
+              expiryDate: "10/08/2026",
+              expired: false,
+            },
+            {
+              id: 2,
+              client: "Tech Solutions SRL",
+              description: "WebApp gestionale",
+              amount: 5800,
+              status: "inviato",
+              statusClass:
+                "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+              statusLabel: "Inviato",
+              expiryDate: "25/08/2026",
+              expired: false,
+            },
+            {
+              id: 3,
+              client: "Studio Legale Bianchi",
+              description: "Restyling sito + SEO",
+              amount: 2100,
+              status: "accettato",
+              statusClass:
+                "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+              statusLabel: "Accettato",
+              expiryDate: "-",
+              expired: false,
+            },
+            {
+              id: 4,
+              client: "Negozio Fiori",
+              description: "E-commerce base",
+              amount: 1500,
+              status: "bozza",
+              statusClass:
+                "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+              statusLabel: "Bozza",
+              expiryDate: "-",
+              expired: false,
+            },
+          ],
+          onQuoteStatusChange: function (q) {
+            var l = {
+              bozza: "Bozza",
+              inviato: "Inviato",
+              accettato: "Accettato",
+              rifiutato: "Rifiutato",
+              fatturato: "Fatturato",
+            };
+            var c = {
+              bozza:
+                "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+              inviato:
+                "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+              accettato:
+                "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+              rifiutato:
+                "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300",
+              fatturato:
+                "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
+            };
+            q.statusLabel = l[q.status];
+            q.statusClass = c[q.status];
+          },
+          onProjectStatusChange: function (p) {
+            var l = {
+              in_arrivo: "In arrivo",
+              in_corso: "In corso",
+              in_revisione: "In revisione",
+              completato: "Completato",
+              archiviato: "Archiviato",
+            };
+            var c = {
+              in_arrivo:
+                "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+              in_corso:
+                "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300",
+              in_revisione:
+                "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+              completato:
+                "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+              archiviato:
+                "bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400",
+            };
+            p.statusLabel = l[p.status];
+            p.statusClass = c[p.status];
+          },
+          advanceProjectStatus: function (p) {
+            var o = [
+              "in_arrivo",
+              "in_corso",
+              "in_revisione",
+              "completato",
+              "archiviato",
+            ];
+            var i = o.indexOf(p.status);
+            if (i < o.length - 1) {
+              p.status = o[i + 1];
+              this.onProjectStatusChange(p);
+            }
+          },
+          createInvoiceFromQuote: function (q) {
+            var n = this.invoices.length + 1;
+            this.invoices.push({
+              id: n,
+              number: String(40 + n),
+              client: q.client,
+              amount: q.amount,
+              dueDate: new Date(Date.now() + 30 * 86400000).toLocaleDateString(
+                "it-IT",
+              ),
+              status: "da_fare",
+              statusClass:
+                "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+              statusLabel: "Da fare",
+              overdue: false,
+            });
+            q.status = "fatturato";
+            q.statusLabel = "Fatturato";
+            q.statusClass =
+              "bg-blue-100 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300";
+            alert("✅ Fattura creata per " + q.client + "!");
+          },
+
+          invoices: [
+            {
+              id: 1,
+              number: "042",
+              client: "WebStudio SRL",
+              amount: 3200,
+              dueDate: "15/07/2026",
+              status: "sollecito",
+              statusClass:
+                "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300",
+              statusLabel: "Sollecito",
+              overdue: true,
+            },
+            {
+              id: 2,
+              number: "041",
+              client: "Creative Lab",
+              amount: 1800,
+              dueDate: "20/07/2026",
+              status: "inviata",
+              statusClass:
+                "bg-amber-100 text-amber-700 dark:bg-amber-900/20 dark:text-amber-300",
+              statusLabel: "Inviata",
+              overdue: true,
+            },
+            {
+              id: 3,
+              number: "040",
+              client: "TechShop SRL",
+              amount: 4500,
+              dueDate: "05/07/2026",
+              status: "pagata",
+              statusClass:
+                "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+              statusLabel: "Pagata",
+              overdue: false,
+            },
+            {
+              id: 4,
+              number: "039",
+              client: "Marco V.",
+              amount: 850,
+              dueDate: "30/06/2026",
+              status: "pagata",
+              statusClass:
+                "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/20 dark:text-emerald-300",
+              statusLabel: "Pagata",
+              overdue: false,
+            },
+            {
+              id: 5,
+              number: "038",
+              client: "Startup XYZ",
+              amount: 6000,
+              dueDate: "10/07/2026",
+              status: "sollecito",
+              statusClass:
+                "bg-red-100 text-red-700 dark:bg-red-900/20 dark:text-red-300",
+              statusLabel: "Sollecito",
+              overdue: true,
+            },
+            {
+              id: 6,
+              number: "043",
+              client: "Studio Legale Bianchi",
+              amount: 2100,
+              dueDate: "01/08/2026",
+              status: "da_fare",
+              statusClass:
+                "bg-gray-100 text-gray-600 dark:bg-gray-700 dark:text-gray-300",
+              statusLabel: "Da fare",
+              overdue: false,
+            },
+          ],
+
+          get calMonthName() {
+            return new Date(this.calYear, this.calMonth).toLocaleDateString(
+              "it-IT",
+              { month: "long", year: "numeric" },
+            );
+          },
+          get calDays() {
+            var d = [],
+              fd = new Date(this.calYear, this.calMonth, 1).getDay(),
+              dm = new Date(this.calYear, this.calMonth + 1, 0).getDate(),
+              t = new Date(),
+              off = fd === 0 ? 6 : fd - 1;
+            for (var i = 0; i < off; i++)
+              d.push({ num: "", today: false, hasTasks: false });
+            for (var j = 1; j <= dm; j++) {
+              var isT =
+                j === t.getDate() &&
+                this.calMonth === t.getMonth() &&
+                this.calYear === t.getFullYear();
+              d.push({
+                num: j,
+                today: isT,
+                hasTasks: [25, 30, 5, 10].indexOf(j) !== -1,
+              });
+            }
+            return d;
+          },
+
+          buildChart: function () {
+            if (this.chartInstance) {
+              this.chartInstance.destroy();
+              this.chartInstance = null;
+            }
+            var ctx = document.getElementById("prodChart");
+            if (!ctx) return;
+            this.chartInstance = new Chart(ctx, {
+              type: "bar",
+              data: {
+                labels: ["Lun", "Mar", "Mer", "Gio", "Ven", "Sab", "Dom"],
+                datasets: [
+                  {
+                    label: "Task completati",
+                    data: [5, 8, 3, 12, 7, 2, 4],
+                    backgroundColor: "#3b82f6",
+                    borderRadius: 6,
+                    maxBarThickness: 40,
+                  },
+                ],
+              },
+              options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                  y: {
+                    beginAtZero: true,
+                    grid: { color: "rgba(148,163,184,0.1)" },
+                    ticks: { font: { size: 11 } },
+                  },
+                  x: {
+                    grid: { display: false },
+                    ticks: { font: { size: 11 } },
+                  },
+                },
+              },
+            });
+          },
+
+          openModal: function (type) {
+            if (type === "project") {
+              this.modalTitle = "Nuovo Progetto";
+              this.modalFields = [
+                {
+                  name: "name",
+                  label: "Nome progetto",
+                  placeholder: "es. Sito Web Agency",
+                },
+                {
+                  name: "client",
+                  label: "Cliente",
+                  placeholder: "es. Creative Lab",
+                },
+                {
+                  name: "dueDate",
+                  label: "Data scadenza",
+                  placeholder: "gg/mm/aaaa",
+                },
+                { name: "hours", label: "Ore stimate", placeholder: "es. 40" },
+                {
+                  name: "status",
+                  label: "Stato",
+                  type: "select",
+                  options: [
+                    "In arrivo",
+                    "In corso",
+                    "In revisione",
+                    "Completato",
+                    "Archiviato",
+                  ],
+                },
+                {
+                  name: "color",
+                  label: "Colore",
+                  type: "select",
+                  options: [
+                    "Blu",
+                    "Giallo",
+                    "Verde",
+                    "Viola",
+                    "Rosa",
+                    "Azzurro",
+                  ],
+                },
+              ];
+            } else if (type === "task") {
+              this.modalTitle = "Nuovo Task";
+              this.modalFields = [
+                {
+                  name: "title",
+                  label: "Titolo task",
+                  placeholder: "es. Fix header responsive",
+                },
+                {
+                  name: "priority",
+                  label: "Priorità",
+                  type: "select",
+                  options: ["Alta", "Media", "Bassa"],
+                },
+                {
+                  name: "project",
+                  label: "Progetto (opzionale)",
+                  placeholder: "es. Sito Web Agency",
+                },
+                {
+                  name: "dueDate",
+                  label: "Data scadenza",
+                  placeholder: "gg/mm/aaaa",
+                },
+                {
+                  name: "subtasks",
+                  label: "Subtask (uno per riga)",
+                  type: "textarea",
+                  placeholder:
+                    "Preparare bozza\nInviare al cliente\nApplicare revisioni",
+                },
+              ];
+            } else if (type === "ticket") {
+              this.modalTitle = "Nuovo Ticket";
+              this.modalFields = [
+                {
+                  name: "client",
+                  label: "Cliente",
+                  placeholder: "Nome cliente",
+                },
+                {
+                  name: "subject",
+                  label: "Oggetto",
+                  placeholder: "es. Errore pagina contatti",
+                },
+                {
+                  name: "priority",
+                  label: "Priorità",
+                  type: "select",
+                  options: ["Alta", "Media", "Bassa"],
+                },
+                {
+                  name: "category",
+                  label: "Categoria",
+                  type: "select",
+                  options: ["Bug", "Feature", "Supporto"],
+                },
+                {
+                  name: "notes",
+                  label: "Note",
+                  type: "textarea",
+                  placeholder: "Descrivi il problema...",
+                },
+              ];
+            } else if (type === "quote") {
+              this.modalTitle = "Nuovo Preventivo";
+              this.modalFields = [
+                {
+                  name: "client",
+                  label: "Cliente",
+                  placeholder: "Nome cliente",
+                },
+                {
+                  name: "amount",
+                  label: "Importo (€)",
+                  placeholder: "es. 2500",
+                },
+                {
+                  name: "description",
+                  label: "Descrizione",
+                  placeholder: "es. Sito vetrina + blog",
+                },
+                {
+                  name: "expiryDate",
+                  label: "Scadenza validità",
+                  placeholder: "gg/mm/aaaa",
+                },
+                { name: "file", label: "Documento PDF", type: "file" },
+              ];
+            } else if (type === "invoice") {
+              this.modalTitle = "Nuova Fattura";
+              this.modalFields = [
+                {
+                  name: "client",
+                  label: "Cliente",
+                  placeholder: "Nome cliente",
+                },
+                {
+                  name: "amount",
+                  label: "Importo (€)",
+                  placeholder: "es. 3200",
+                },
+                {
+                  name: "dueDate",
+                  label: "Scadenza",
+                  placeholder: "gg/mm/aaaa",
+                },
+                {
+                  name: "status",
+                  label: "Stato",
+                  type: "select",
+                  options: ["Da fare", "Inviata", "Pagata", "Sollecito"],
+                },
+              ];
+            }
+            this.modalOpen = true;
+          },
+        };
+      }
+    </script>
+  </body>
+</html>

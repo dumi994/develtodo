@@ -1,0 +1,99 @@
+graph TD
+    subgraph "Frontend (Blade + Tailwind + Alpine.js)"
+        DASH[Dashboard]
+        PROJ[Progetti]
+        TASK[Task / Todo]
+        TICK[Ticket]
+        PREV[Preventivi]
+        FATT[Fatture]
+        CAL[Calendario]
+        KAN[Kanban Board]
+        NOTIF[Notifiche UI]
+        AUTH[Login / Auth]
+    end
+
+    subgraph "Backend (Laravel 11+)"
+        ROUTE[Web Routes]
+        CTRL[Controllers]
+        BLADE[Blade Views]
+        SCHED[Task Scheduling]
+        MAIL[Mail / Notifications]
+    end
+
+    subgraph "NativePHP Desktop 2"
+        NPHP[NativePHP Runtime]
+        NAPI[API Native<br/>Notifiche, File, Finestre]
+        ELEC[Electron Shell]
+    end
+
+    subgraph "Database (SQLite)"
+        DB[(SQLite<br/>progetti, tasks, tickets<br/>preventivi, fatture, users)]
+    end
+
+    subgraph "Modelli (Eloquent ORM)"
+        M_USER[User]
+        M_PROJ[Project]
+        M_TASK[Task]
+        M_TICK[Ticket]
+        M_PREV[Preventivo]
+        M_FATT[Fattura]
+        M_REM[Reminder]
+    end
+
+    AUTH --> ROUTE
+    ROUTE --> CTRL
+    CTRL --> BLADE
+    CTRL --> M_USER
+    CTRL --> M_PROJ
+    CTRL --> M_TASK
+    CTRL --> M_TICK
+    CTRL --> M_PREV
+    CTRL --> M_FATT
+    CTRL --> M_REM
+    M_USER --> DB
+    M_PROJ --> DB
+    M_TASK --> DB
+    M_TICK --> DB
+    M_PREV --> DB
+    M_FATT --> DB
+    M_REM --> DB
+
+    DASH --> CTRL
+    PROJ --> CTRL
+    TASK --> CTRL
+    TICK --> CTRL
+    PREV --> CTRL
+    FATT --> CTRL
+    CAL --> CTRL
+    KAN --> CTRL
+    NOTIF --> CTRL
+
+    SCHED --> M_REM
+    SCHED --> M_FATT
+    SCHED --> M_TASK
+    MAIL --> NAPI
+    NAPI --> ELEC
+
+    NPHP --> ELEC
+    ELEC --> DASH
+    ELEC --> PROJ
+    ELEC --> TASK
+    ELEC --> TICK
+    ELEC --> PREV
+    ELEC --> FATT
+    ELEC --> CAL
+    ELEC --> KAN
+    ELEC --> NOTIF
+    ELEC --> AUTH
+
+    style DASH fill:#e0f2fe,stroke:#0284c7
+    style PROJ fill:#e0f2fe,stroke:#0284c7
+    style TASK fill:#e0f2fe,stroke:#0284c7
+    style TICK fill:#e0f2fe,stroke:#0284c7
+    style PREV fill:#e0f2fe,stroke:#0284c7
+    style FATT fill:#e0f2fe,stroke:#0284c7
+    style NPHP fill:#fef3c7,stroke:#d97706
+    style ELEC fill:#fef3c7,stroke:#d97706
+    style DB fill:#d1fae5,stroke:#059669
+    style CTRL fill:#fce7f3,stroke:#db2777
+    style BLADE fill:#fce7f3,stroke:#db2777
