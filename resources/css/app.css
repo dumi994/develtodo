@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer components {
+  .card {
+    @apply bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-2xl transition-shadow hover:shadow-md;
+  }
+  .btn {
+    @apply inline-flex items-center gap-1.5 font-semibold text-xs px-4 py-2 rounded-xl transition-all cursor-pointer border-none;
+  }
+  .btn-primary {
+    @apply bg-blue-600 text-white hover:bg-blue-700;
+  }
+  .btn-success {
+    @apply bg-emerald-600 text-white hover:bg-emerald-700;
+  }
+  .btn-ghost {
+    @apply bg-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800;
+  }
+  .badge {
+    @apply text-[10px] font-bold px-2 py-0.5 rounded-full inline-block;
+  }
+  .input {
+    @apply w-full px-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-transparent focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition;
+  }
+  .nav-item {
+    @apply flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium cursor-pointer transition-all duration-150 border-l-[3px] border-transparent text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800;
+  }
+  .nav-item.active {
+    @apply bg-blue-50 dark:bg-blue-900/20 text-blue-700 dark:text-blue-300 border-l-blue-600;
+  }
+  .progress-bar {
+    @apply h-1.5 rounded-full overflow-hidden bg-gray-200 dark:bg-gray-700;
+  }
+  .progress-fill {
+    @apply h-full rounded-full transition-all duration-500;
+  }
+  .scroll-thin::-webkit-scrollbar {
+    width: 5px;
+  }
+  .scroll-thin::-webkit-scrollbar-thumb {
+    @apply bg-gray-300 dark:bg-gray-600 rounded-full;
+  }
+}
