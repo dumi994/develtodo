@@ -17,7 +17,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
-          extensions: mbstring, xml, ctype, json, bcmath, pdo, sqlite, pdo_sqlite
+          extensions: mbstring, xml, ctype, json, bcmath, pdo, sqlite, pdo_sqlite, fileinfo, zip, curl, openssl, gd
           coverage: none
 
       - name: Setup Node.js
@@ -83,7 +83,7 @@ jobs:
         uses: shivammathur/setup-php@v2
         with:
           php-version: "8.3"
-          extensions: mbstring, xml, ctype, json, bcmath, pdo, sqlite, pdo_sqlite
+          extensions: mbstring, xml, ctype, json, bcmath, pdo, sqlite, pdo_sqlite, fileinfo, zip, curl, openssl, gd
           coverage: none
 
       - name: Setup Node.js
