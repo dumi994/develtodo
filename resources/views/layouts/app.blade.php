@@ -64,6 +64,21 @@
                 <p class="text-xs text-gray-400" x-text="currentDate"></p>
             </div>
             <div class="flex items-center gap-3">
+                <!-- Ricerca globale -->
+                <div class="relative hidden sm:block" x-data="{ searchOpen: false, searchQuery: '', results: [], searching: false }" @click.outside="searchOpen = false">
+                    <input type="text" x-model="searchQuery" @input.debounce.300ms="if(searchQuery.length>1){searching=true; fetch('/search?q='+encodeURIComponent(searchQuery)).then(r=>r.json()).then(d=>{results=d;searchOpen=true;searching=false;})}else{results=[];searchOpen=false;}" @focus="if(results.length)searchOpen=true" placeholder="Cerca progetti, task, ticket..." class="w-48 lg:w-64 pl-9 pr-3 py-2 text-sm border border-gray-200 dark:border-gray-700 rounded-xl bg-gray-50 dark:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:bg-white dark:focus:bg-gray-900 transition">
+                    <svg class="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/></svg>
+                    <div x-show="searchOpen" x-cloak class="absolute top-full mt-2 left-0 w-full bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-72 overflow-y-auto fade-in">
+                        <template x-for="r in results" :key="r.type + r.title">
+                            <a :href="r.url" class="p-3 border-b border-gray-100 dark:border-gray-700/50 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/50 flex items-center gap-3 block">
+                                <span x-text="r.icon" class="text-base"></span>
+                                <div><p class="text-sm font-medium" x-text="r.title"></p><p class="text-[10px] text-gray-400" x-text="r.sub"></p></div>
+                            </a>
+                        </template>
+                        <div x-show="results.length === 0 && !searching" class="p-4 text-center text-xs text-gray-400">Nessun risultato</div>
+                        <div x-show="searching" class="p-4 text-center text-xs text-gray-400">Ricerca in corso...</div>
+                    </div>
+                </div>
                 <!-- Notifiche -->
                 <div class="relative" x-data="{ notifOpen: false, notifs: [], unread: 0 }" x-init="fetch('/notifications').then(r=>r.json()).then(d=>{ notifs=d.notifications; unread=d.unreadCount; })" @click.outside="notifOpen = false">
                     <button @click="notifOpen = !notifOpen; if(notifOpen) fetch('/notifications').then(r=>r.json()).then(d=>{ notifs=d.notifications; unread=d.unreadCount; })" class="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
