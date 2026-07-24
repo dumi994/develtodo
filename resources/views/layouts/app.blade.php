@@ -64,6 +64,28 @@
                 <p class="text-xs text-gray-400" x-text="currentDate"></p>
             </div>
             <div class="flex items-center gap-3">
+                <!-- Notifiche -->
+                <div class="relative" x-data="{ notifOpen: false, notifs: [], unread: 0 }" x-init="fetch('/notifications').then(r=>r.json()).then(d=>{ notifs=d.notifications; unread=d.unreadCount; })" @click.outside="notifOpen = false">
+                    <button @click="notifOpen = !notifOpen; if(notifOpen) fetch('/notifications').then(r=>r.json()).then(d=>{ notifs=d.notifications; unread=d.unreadCount; })" class="relative p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9"/></svg>
+                        <span x-show="unread > 0" class="absolute -top-0.5 -right-0.5 bg-red-500 text-white text-[10px] font-bold rounded-full w-4.5 h-4.5 flex items-center justify-center" x-text="unread"></span>
+                    </button>
+                    <div x-show="notifOpen" x-cloak class="absolute right-0 mt-2 w-80 bg-white dark:bg-gray-800 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 z-50 max-h-80 overflow-y-auto fade-in">
+                        <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex justify-between items-center">
+                            <span class="font-semibold text-sm">Notifiche</span>
+                            <button @click="fetch('/notifications/mark-all-read', {method:'POST', headers:{'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content}}).then(()=>{ unread=0; notifs.forEach(n=>n.read=true); })" class="text-xs text-blue-600 hover:underline">Tutte lette</button>
+                        </div>
+                        <template x-for="n in notifs" :key="n.id">
+                            <div @click="if(!n.read){ fetch('/notifications/'+n.id+'/read', {method:'POST', headers:{'X-CSRF-TOKEN': document.querySelector('meta[name=csrf-token]').content}}).then(()=>{ n.read=true; unread--; }); }" :class="n.read ? 'opacity-50' : 'bg-blue-50 dark:bg-blue-900/10'" class="p-3 border-b border-gray-100 dark:border-gray-700/30 cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700/30 transition">
+                                <div class="flex gap-3">
+                                    <span x-text="n.icon" class="text-base"></span>
+                                    <div><p class="text-sm font-medium" x-text="n.title"></p><p class="text-xs text-gray-400" x-text="n.created_at ? new Date(n.created_at).toLocaleDateString('it-IT') : ''"></p></div>
+                                </div>
+                            </div>
+                        </template>
+                        <div x-show="notifs.length === 0" class="p-6 text-center text-sm text-gray-400">Nessuna notifica</div>
+                    </div>
+                </div>
                 <button @click="darkMode = !darkMode; localStorage.setItem('theme', darkMode ? 'dark' : 'light')" class="p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-gray-800 transition">
                     <svg x-show="!darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"/></svg>
                     <svg x-show="darkMode" class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
