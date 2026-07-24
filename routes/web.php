@@ -8,11 +8,15 @@ use App\Http\Controllers\QuoteController;
 use App\Http\Controllers\InvoiceController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SearchController;
+use App\Http\Controllers\SetupController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
 });
+
+Route::get('/setup', [SetupController::class, 'index'])->name('setup');
+Route::post('/setup', [SetupController::class, 'run'])->name('setup.run');
 
 Route::get('/dashboard', function () {
     return view('dashboard');
