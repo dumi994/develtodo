@@ -15,6 +15,15 @@ class NativeAppServiceProvider implements ProvidesPhpIni
      */
     public function boot(): void
     {
+        // Assicura che le cartelle storage necessarie esistano
+        $dirs = ['app', 'framework/cache', 'framework/sessions', 'framework/views', 'logs'];
+        foreach ($dirs as $dir) {
+            $path = storage_path($dir);
+            if (!is_dir($path)) {
+                @mkdir($path, 0777, true);
+            }
+        }
+
         // Esegue le migration all'avvio per evitare errori 500
         Artisan::call('migrate', ['--force' => true]);
 

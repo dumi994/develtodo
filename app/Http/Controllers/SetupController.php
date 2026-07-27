@@ -43,8 +43,18 @@ class SetupController extends Controller
     }
 
     // Crea file marker per evitare di ripetere il setup
-    file_put_contents(storage_path('app/.seeded'), now()->toISOString());
+    $seedFile = storage_path('app/.seeded');
+    if (!is_dir(dirname($seedFile))) {
+      @mkdir(dirname($seedFile), 0777, true);
+    }
+    file_put_contents($seedFile, now()->toISOString());
 
-    return redirect()->route('login')->with('status', 'Setup completato! Usa le credenziali admin@develtodo.local / admin123');
+    // Autentica l'admin e vai al dashboard
+    $admin = User::where('email', $adminEmail)->first();
+    if ($admin) {
+      auth()->login($admin);
+    }
+
+    return redirect()->route('dashboard')->with('status', 'Setup completato! Benvenuto in DevelTodo.');
   }
 }
