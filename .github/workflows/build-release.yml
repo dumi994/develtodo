@@ -48,15 +48,14 @@ jobs:
         run: php artisan migrate --force
 
       - name: Install NativePHP
-        run: php artisan native:install --force --quiet --no-interaction || true
+        run: php artisan native:install --force --quiet --no-interaction
 
       - name: Build native app (Windows x64)
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
           WIN_CSC_LINK: ""
           WIN_CSC_KEY_PASSWORD: ""
-        run: |
-          echo "0" | php artisan native:build --no-interaction
+        run: php artisan native:build win x64 --no-interaction
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
@@ -71,7 +70,7 @@ jobs:
         with:
           files: |
             nativephp/electron/dist/win-unpacked/develtodo.exe
-          draft: true
+          draft: false
           prerelease: false
           generate_release_notes: true
         env:
@@ -114,13 +113,12 @@ jobs:
         run: php artisan migrate --force
 
       - name: Install NativePHP
-        run: php artisan native:install --force --quiet --no-interaction || true
+        run: php artisan native:install --force --quiet --no-interaction
 
       - name: Build native app (Linux x64)
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-        run: |
-          echo "1" | php artisan native:build --no-interaction || true
+        run: php artisan native:build linux x64 --no-interaction
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
