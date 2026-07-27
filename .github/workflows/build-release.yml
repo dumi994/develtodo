@@ -43,6 +43,15 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           php artisan storage:link
+          # Imposta il nome app corretto
+          (Get-Content .env) -replace 'APP_NAME=.*', 'APP_NAME=DevelTodo' | Set-Content .env
+          Add-Content .env "`nNATIVEPHP_APP_NAME=DevelTodo"
+          Add-Content .env "NATIVEPHP_APP_ID=com.develtodo.app"
+          Add-Content .env "NATIVEPHP_APP_VERSION=1.0.0"
+          Add-Content .env "NATIVEPHP_APP_AUTHOR=DevelTodo"
+          Add-Content .env "NATIVEPHP_APP_COPYRIGHT=(c) 2026 DevelTodo"
+          Add-Content .env "NATIVEPHP_APP_DESCRIPTION=Todo e gestionale per web developer"
+        shell: pwsh
 
       - name: Run migrations
         run: php artisan migrate --force
@@ -79,10 +88,14 @@ jobs:
       - name: Zip the app
         shell: pwsh
         run: |
-          # Cerca la cartella win-unpacked o qualsiasi cartella con develtodo.exe
+          # Cerca develtodo.exe o qualsiasi exe che non sia php.exe/hiddeninput.exe
           $exe = Get-ChildItem -Path "nativephp" -Recurse -Filter "develtodo.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $exe) {
+            $exe = Get-ChildItem -Path "nativephp" -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notin @("php.exe","hiddeninput.exe","windows-kill.exe") } | Select-Object -First 1
+          }
           if ($exe) {
             $appDir = $exe.DirectoryName
+            Write-Host "Found app exe: $($exe.FullName) - Size: $($exe.Length) bytes"
             Write-Host "Zipping app from: $appDir"
             Compress-Archive -Path "$appDir\*" -DestinationPath "develtodo-windows-x64.zip" -Force
           } elseif (Test-Path "nativephp\electron\dist\win-unpacked") {
@@ -90,11 +103,11 @@ jobs:
             Compress-Archive -Path "nativephp\electron\dist\win-unpacked\*" -DestinationPath "develtodo-windows-x64.zip" -Force
           } else {
             Write-Host "ERROR: No app folder found!"
-            dir nativephp\electron\dist -Recurse
+            Get-ChildItem "nativephp\electron\dist" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, Length
             exit 1
           }
-          Write-Host "Zip size:"
-          (Get-Item "develtodo-windows-x64.zip").Length
+          $zipSize = (Get-Item "develtodo-windows-x64.zip").Length
+          Write-Host "Zip created: develtodo-windows-x64.zip - Size: $zipSize bytes"
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
