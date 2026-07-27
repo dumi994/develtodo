@@ -49,9 +49,19 @@
                             @endforeach
                             <div class="flex items-center gap-2 mt-1.5">
                                 <div class="progress-bar flex-1" style="height:4px">
-                                    <div class="progress-fill" style="width:{{ count(array_filter($t->subtasks, fn($s) => $s['done'])) / max(count($t->subtasks),1) * 100 }}%;background:#10b981"></div>
+                                    @php
+                                        $doneCount = 0;
+                                        $totalCount = is_array($t->subtasks) ? count($t->subtasks) : 0;
+                                        if ($totalCount > 0) {
+                                            foreach ($t->subtasks as $sub) {
+                                                if (!empty($sub['done'])) $doneCount++;
+                                            }
+                                        }
+                                        $pct = $totalCount > 0 ? ($doneCount / $totalCount * 100) : 0;
+                                    @endphp
+                                    <div class="progress-fill" style="width:{{ $pct }}%;background:#10b981"></div>
                                 </div>
-                                <span class="text-[10px] text-gray-400 font-medium">{{ count(array_filter($t->subtasks, fn($s) => $s['done'])) }}/{{ count($t->subtasks) }}</span>
+                                <span class="text-[10px] text-gray-400 font-medium">{{ $doneCount }}/{{ $totalCount }}</span>
                             </div>
                         </div>
                         @endif
@@ -196,7 +206,14 @@
             get calDays() {
                 var d = [], fd = new Date(this.calYear, this.calMonth, 1).getDay(), dm = new Date(this.calYear, this.calMonth + 1, 0).getDate(), t = new Date(), off = fd === 0 ? 6 : fd - 1;
                 for (var i = 0; i < off; i++) d.push({num:'', today:false, hasTasks:false});
-                @php $taskDates = $tasks->filter(fn($t) => $t->due_date)->pluck('due_date')->map(fn($d) => $d->format('j'))->toArray(); @endphp
+                @php
+                    $taskDates = [];
+                    foreach ($tasks as $tk) {
+                        if ($tk->due_date) {
+                            $taskDates[] = $tk->due_date->format('j');
+                        }
+                    }
+                @endphp
                 var taskDays = {!! json_encode($taskDates) !!};
                 for (var j = 1; j <= dm; j++) {
                     var isT = j === t.getDate() && this.calMonth === t.getMonth() && this.calYear === t.getFullYear();

@@ -12,7 +12,11 @@ use App\Http\Controllers\SetupController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
-    return view('welcome');
+    $seedFile = storage_path('app/.seeded');
+    if (!file_exists($seedFile)) {
+        return redirect()->route('setup');
+    }
+    return redirect()->route('dashboard');
 });
 
 Route::get('/setup', [SetupController::class, 'index'])->name('setup');

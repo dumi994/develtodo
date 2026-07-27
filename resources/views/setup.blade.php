@@ -36,6 +36,15 @@
                         </button>
                     </form>
                 @endif
+
+                <div class="mt-6 p-4 bg-blue-50 dark:bg-blue-950/30 rounded-xl border border-blue-200 dark:border-blue-900">
+                    <p class="text-xs font-semibold text-blue-700 dark:text-blue-300 mb-2">🔐 Credenziali admin predefinite</p>
+                    <div class="text-xs text-gray-600 dark:text-gray-400 space-y-1 font-mono">
+                        <p>Email: <span class="font-bold">admin@develtodo.local</span></p>
+                        <p>Password: <span class="font-bold">admin123</span></p>
+                    </div>
+                    <p class="text-[10px] text-gray-400 mt-2">Verranno create automaticamente al primo avvio. Potrai cambiarle dal profilo.</p>
+                </div>
             </div>
         </div>
     </div>

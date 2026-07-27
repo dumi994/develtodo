@@ -9,10 +9,20 @@ class ProjectController extends Controller
 {
     public function index()
     {
+        $orderMap = [
+            'in_corso' => 1,
+            'in_revisione' => 2,
+            'in_arrivo' => 3,
+            'completato' => 4,
+            'archiviato' => 5,
+        ];
+
         $projects = Project::where('user_id', auth()->id())
-            ->orderByRaw("FIELD(status, 'in_corso', 'in_revisione', 'in_arrivo', 'completato', 'archiviato')")
-            ->orderBy('due_date')
-            ->get();
+            ->get()
+            ->sortBy(function ($p) use ($orderMap) {
+                return $orderMap[$p->status] ?? 99;
+            })
+            ->sortBy('due_date');
 
         return view('projects.index', compact('projects'));
     }
