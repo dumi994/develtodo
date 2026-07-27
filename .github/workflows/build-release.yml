@@ -64,12 +64,25 @@ jobs:
           path: nativephp/electron/dist/win-unpacked/
           retention-days: 30
 
+      - name: Find and zip exe
+        shell: pwsh
+        run: |
+          $exe = Get-ChildItem -Path nativephp/electron/dist -Recurse -Filter "develtodo.exe" | Select-Object -First 1
+          if ($exe) {
+            Write-Host "Found exe: $($exe.FullName)"
+            Compress-Archive -Path "$($exe.DirectoryName)/*" -DestinationPath "develtodo-windows-x64.zip"
+            Write-Host "Zip created"
+          } else {
+            Write-Host "No exe found, zipping entire dist"
+            Compress-Archive -Path "nativephp/electron/dist/win-unpacked/*" -DestinationPath "develtodo-windows-x64.zip"
+          }
+
       - name: Create Release
         if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            nativephp/electron/dist/win-unpacked/develtodo.exe
+            develtodo-windows-x64.zip
           draft: false
           prerelease: false
           generate_release_notes: true
