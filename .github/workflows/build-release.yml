@@ -64,25 +64,28 @@ jobs:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
           WIN_CSC_LINK: ""
           WIN_CSC_KEY_PASSWORD: ""
+          NATIVEPHP_APP_NAME: "DevelTodo"
+          NATIVEPHP_APP_FILENAME: "develtodo"
         shell: pwsh
         run: |
           # Passa le risposte interattive: 0=win, 0=x64
           "0`n0" | php artisan native:build
 
-      - name: Debug - Find all exe files
+      - name: Find installer and exe
         shell: pwsh
         run: |
-          Write-Host "=== Searching for exe files ==="
-          Get-ChildItem -Path "nativephp" -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | ForEach-Object {
+          Write-Host "=== Searching for setup/installer ==="
+          Get-ChildItem -Path "nativephp" -Recurse -Filter "*setup*" -ErrorAction SilentlyContinue | ForEach-Object {
             Write-Host "Found: $($_.FullName) - Size: $($_.Length) bytes"
           }
-          Write-Host "=== dist folder contents ==="
+          Get-ChildItem -Path "nativephp" -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | ForEach-Object {
+            Write-Host "EXE: $($_.FullName) - Size: $($_.Length) bytes"
+          }
+          Write-Host "=== dist folder ==="
           if (Test-Path "nativephp\electron\dist") {
-            Get-ChildItem -Path "nativephp\electron\dist" -Recurse -ErrorAction SilentlyContinue | ForEach-Object {
-              Write-Host "$($_.FullName) - $($_.Length) bytes"
+            Get-ChildItem -Path "nativephp\electron\dist" -ErrorAction SilentlyContinue | ForEach-Object {
+              Write-Host "$($_.Name) - $($_.Length) bytes"
             }
-          } else {
-            Write-Host "dist folder does not exist!"
           }
 
       - name: Zip the app
