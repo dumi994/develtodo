@@ -19,7 +19,7 @@
         <div x-show="view === 'list'" class="space-y-4">
             <div class="flex gap-2 flex-wrap">
                 <template x-for="f in ['Tutti','Alta priorità','In scadenza','Completati']" :key="f">
-                    <button @click="filter = f" :class="filter === f ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800'" class="px-3 py-1.5 text-xs rounded-lg font-semibold transition">{{f}}</button>
+                    <button @click="filter = f" :class="filter === f ? 'bg-blue-600 text-white' : 'bg-white dark:bg-gray-900 text-gray-500 dark:text-gray-400 border border-gray-200 dark:border-gray-800'" class="px-3 py-1.5 text-xs rounded-lg font-semibold transition">@{{f}}</button>
                 </template>
             </div>
             <div class="space-y-2">
