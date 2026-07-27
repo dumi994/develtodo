@@ -57,24 +57,47 @@ jobs:
           WIN_CSC_KEY_PASSWORD: ""
         run: php artisan native:build win x64 --no-interaction
 
+      - name: Debug - List dist contents
+        shell: pwsh
+        run: |
+          Write-Host "=== dist contents ==="
+          if (Test-Path "nativephp/electron/dist") {
+            Get-ChildItem -Path "nativephp/electron/dist" -Recurse | Select-Object FullName, Length | Format-Table -AutoSize
+          } else {
+            Write-Host "dist folder does not exist!"
+          }
+          Write-Host "=== Looking for exe ==="
+          $exe = Get-ChildItem -Path "nativephp" -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue
+          if ($exe) {
+            $exe | Select-Object FullName, Length | Format-Table -AutoSize
+          } else {
+            Write-Host "No exe found anywhere in nativephp/"
+          }
+
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
           name: develtodo-windows-x64
-          path: nativephp/electron/dist/win-unpacked/
+          path: nativephp/electron/dist/
           retention-days: 30
 
       - name: Find and zip exe
         shell: pwsh
         run: |
-          $exe = Get-ChildItem -Path nativephp/electron/dist -Recurse -Filter "develtodo.exe" | Select-Object -First 1
+          $exe = Get-ChildItem -Path "nativephp" -Recurse -Filter "develtodo.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
           if ($exe) {
             Write-Host "Found exe: $($exe.FullName)"
-            Compress-Archive -Path "$($exe.DirectoryName)/*" -DestinationPath "develtodo-windows-x64.zip"
-            Write-Host "Zip created"
+            Compress-Archive -Path "$($exe.DirectoryName)/*" -DestinationPath "develtodo-windows-x64.zip" -Force
+            Write-Host "Zip created at develtodo-windows-x64.zip"
+            Get-Item "develtodo-windows-x64.zip" | Select-Object Name, Length
           } else {
-            Write-Host "No exe found, zipping entire dist"
-            Compress-Archive -Path "nativephp/electron/dist/win-unpacked/*" -DestinationPath "develtodo-windows-x64.zip"
+            Write-Host "No develtodo.exe found! Zipping entire dist folder."
+            if (Test-Path "nativephp/electron/dist") {
+              Compress-Archive -Path "nativephp/electron/dist/*" -DestinationPath "develtodo-windows-x64.zip" -Force
+            } else {
+              Write-Host "ERROR: dist folder doesn't exist!"
+              exit 1
+            }
           }
 
       - name: Create Release
