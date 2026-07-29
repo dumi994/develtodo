@@ -45,7 +45,6 @@ jobs:
           cp .env.example .env
           php artisan key:generate
           php artisan storage:link
-          # Imposta il nome app corretto
           (Get-Content .env) -replace 'APP_NAME=.*', 'APP_NAME=DevelTodo' | Set-Content .env
           Add-Content .env "`nNATIVEPHP_APP_NAME=DevelTodo"
           Add-Content .env "NATIVEPHP_APP_ID=com.develtodo.app"
@@ -70,7 +69,6 @@ jobs:
           NATIVEPHP_APP_FILENAME: "develtodo"
         shell: pwsh
         run: |
-          # Passa le risposte interattive: 0=win, 0=x64
           "0`n0" | php artisan native:build
 
       - name: Find installer and exe
@@ -79,9 +77,6 @@ jobs:
           Write-Host "=== Searching for setup/installer ==="
           Get-ChildItem -Path "nativephp" -Recurse -Filter "*setup*" -ErrorAction SilentlyContinue | ForEach-Object {
             Write-Host "Found: $($_.FullName) - Size: $($_.Length) bytes"
-          }
-          Get-ChildItem -Path "nativephp" -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | ForEach-Object {
-            Write-Host "EXE: $($_.FullName) - Size: $($_.Length) bytes"
           }
           Write-Host "=== dist folder ==="
           if (Test-Path "nativephp\electron\dist") {
@@ -93,23 +88,19 @@ jobs:
       - name: Zip the app
         shell: pwsh
         run: |
-          # Cerca develtodo.exe o qualsiasi exe che non sia php.exe/hiddeninput.exe
-          $exe = Get-ChildItem -Path "nativephp" -Recurse -Filter "develtodo.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-          if (-not $exe) {
-            $exe = Get-ChildItem -Path "nativephp" -Recurse -Filter "*.exe" -ErrorAction SilentlyContinue | Where-Object { $_.Name -notin @("php.exe","hiddeninput.exe","windows-kill.exe") } | Select-Object -First 1
-          }
-          if ($exe) {
-            $appDir = $exe.DirectoryName
-            Write-Host "Found app exe: $($exe.FullName) - Size: $($exe.Length) bytes"
-            Write-Host "Zipping app from: $appDir"
-            Compress-Archive -Path "$appDir\*" -DestinationPath "develtodo-windows-x64.zip" -Force
-          } elseif (Test-Path "nativephp\electron\dist\win-unpacked") {
+          if (Test-Path "nativephp\electron\dist\win-unpacked") {
             Write-Host "Zipping win-unpacked folder"
             Compress-Archive -Path "nativephp\electron\dist\win-unpacked\*" -DestinationPath "develtodo-windows-x64.zip" -Force
           } else {
-            Write-Host "ERROR: No app folder found!"
-            Get-ChildItem "nativephp\electron\dist" -Recurse -ErrorAction SilentlyContinue | Select-Object FullName, Length
-            exit 1
+            $exe = Get-ChildItem -Path "nativephp" -Recurse -Filter "develtodo.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
+            if ($exe) {
+              $appDir = $exe.DirectoryName
+              Write-Host "Found app exe: $($exe.FullName)"
+              Compress-Archive -Path "$appDir\*" -DestinationPath "develtodo-windows-x64.zip" -Force
+            } else {
+              Write-Host "ERROR: No app folder found!"
+              exit 1
+            }
           }
           $zipSize = (Get-Item "develtodo-windows-x64.zip").Length
           Write-Host "Zip created: develtodo-windows-x64.zip - Size: $zipSize bytes"
@@ -121,11 +112,195 @@ jobs:
           path: develtodo-windows-x64.zip
           retention-days: 30
 
+  build-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, xml, ctype, json, bcmath, pdo, sqlite, pdo_sqlite, fileinfo, zip, curl, openssl, gd
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Install NPM dependencies
+        run: npm install
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan storage:link
+          sed -i '' 's/APP_NAME=.*/APP_NAME=DevelTodo/' .env
+          echo "NATIVEPHP_APP_NAME=DevelTodo" >> .env
+          echo "NATIVEPHP_APP_ID=com.develtodo.app" >> .env
+          echo "NATIVEPHP_APP_VERSION=1.0.0" >> .env
+          echo "NATIVEPHP_APP_AUTHOR=DevelTodo" >> .env
+          echo 'NATIVEPHP_APP_COPYRIGHT="(c) 2026 DevelTodo"' >> .env
+          echo 'NATIVEPHP_APP_DESCRIPTION="Todo e gestionale per web developer"' >> .env
+
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      - name: Install NativePHP
+        run: php artisan native:install --force --quiet --no-interaction
+
+      - name: Build native app (macOS x64)
+        env:
+          NATIVEPHP_APP_NAME: "DevelTodo"
+          NATIVEPHP_APP_FILENAME: "develtodo"
+        run: |
+          printf "2\n0\n" | php artisan native:build
+
+      - name: Find and zip macOS app
+        run: |
+          echo "=== dist folder ==="
+          if [ -d "nativephp/electron/dist" ]; then
+            ls -la nativephp/electron/dist/
+            ls -la nativephp/electron/dist/*.dmg 2>/dev/null || true
+            ls -la nativephp/electron/dist/*.app 2>/dev/null || true
+          fi
+          # Zip the mac-unpacked or AppImage
+          if [ -d "nativephp/electron/dist/mac" ]; then
+            echo "Zipping mac folder"
+            ditto -c -k --sequesterRsrc --keepParent "nativephp/electron/dist/mac" "develtodo-macos-x64.zip"
+          elif [ -d "nativephp/electron/dist/mac-unpacked" ]; then
+            echo "Zipping mac-unpacked folder"
+            ditto -c -k --sequesterRsrc --keepParent "nativephp/electron/dist/mac-unpacked" "develtodo-macos-x64.zip"
+          else
+            echo "ERROR: No mac app folder found!"
+            find nativephp/electron/dist -type d -maxdepth 2 2>/dev/null || true
+            exit 1
+          fi
+          ls -la develtodo-macos-x64.zip
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: develtodo-macos-x64
+          path: develtodo-macos-x64.zip
+          retention-days: 30
+
+  build-linux:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup PHP
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.3"
+          extensions: mbstring, xml, ctype, json, bcmath, pdo, sqlite, pdo_sqlite, fileinfo, zip, curl, openssl, gd
+          coverage: none
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - name: Install system dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends libx11-dev libxkbfile-dev libsecret-1-dev libarchive-tools rpm
+
+      - name: Install Composer dependencies
+        run: composer install --no-dev --optimize-autoloader --no-interaction
+
+      - name: Install NPM dependencies
+        run: npm install
+
+      - name: Build frontend assets
+        run: npm run build
+
+      - name: Prepare environment
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan storage:link
+          sed -i 's/APP_NAME=.*/APP_NAME=DevelTodo/' .env
+          echo "NATIVEPHP_APP_NAME=DevelTodo" >> .env
+          echo "NATIVEPHP_APP_ID=com.develtodo.app" >> .env
+          echo "NATIVEPHP_APP_VERSION=1.0.0" >> .env
+          echo "NATIVEPHP_APP_AUTHOR=DevelTodo" >> .env
+          echo 'NATIVEPHP_APP_COPYRIGHT="(c) 2026 DevelTodo"' >> .env
+          echo 'NATIVEPHP_APP_DESCRIPTION="Todo e gestionale per web developer"' >> .env
+
+      - name: Run migrations
+        run: php artisan migrate --force
+
+      - name: Install NativePHP
+        run: php artisan native:install --force --quiet --no-interaction
+
+      - name: Build native app (Linux x64)
+        env:
+          NATIVEPHP_APP_NAME: "DevelTodo"
+          NATIVEPHP_APP_FILENAME: "develtodo"
+        run: |
+          printf "1\n0\n" | php artisan native:build
+
+      - name: Find and zip Linux app
+        run: |
+          echo "=== dist folder ==="
+          if [ -d "nativephp/electron/dist" ]; then
+            ls -la nativephp/electron/dist/
+          fi
+          # Zip linux-unpacked or AppImage
+          if [ -d "nativephp/electron/dist/linux-unpacked" ]; then
+            echo "Zipping linux-unpacked folder"
+            zip -r "develtodo-linux-x64.zip" "nativephp/electron/dist/linux-unpacked"
+          else
+            # Try to find AppImage
+            appimage=$(find nativephp/electron/dist -name "*.AppImage" -type f 2>/dev/null | head -1)
+            if [ -n "$appimage" ]; then
+              echo "Found AppImage: $appimage"
+              cp "$appimage" "develtodo-linux-x64.AppImage"
+            else
+              echo "ERROR: No linux app folder found!"
+              find nativephp/electron/dist -type d -maxdepth 3 2>/dev/null || true
+              exit 1
+            fi
+          fi
+          ls -la develtodo-linux-x64.*z* 2>/dev/null || ls -la develtodo-linux-x64.* 2>/dev/null || true
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: develtodo-linux-x64
+          path: |
+            develtodo-linux-x64.zip
+            develtodo-linux-x64.AppImage
+          retention-days: 30
+
+  release:
+    if: startsWith(github.ref, 'refs/tags/')
+    needs: [build-windows, build-macos, build-linux]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+
       - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v2
         with:
-          files: develtodo-windows-x64.zip
+          files: |
+            develtodo-windows-x64/develtodo-windows-x64.zip
+            develtodo-macos-x64/develtodo-macos-x64.zip
+            develtodo-linux-x64/develtodo-linux-x64.zip
+            develtodo-linux-x64/develtodo-linux-x64.AppImage
           draft: false
           prerelease: false
           generate_release_notes: true
