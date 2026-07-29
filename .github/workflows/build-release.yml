@@ -51,8 +51,8 @@ jobs:
           Add-Content .env "NATIVEPHP_APP_ID=com.develtodo.app"
           Add-Content .env "NATIVEPHP_APP_VERSION=1.0.0"
           Add-Content .env "NATIVEPHP_APP_AUTHOR=DevelTodo"
-          Add-Content .env "NATIVEPHP_APP_COPYRIGHT=(c) 2026 DevelTodo"
-          Add-Content .env "NATIVEPHP_APP_DESCRIPTION=Todo e gestionale per web developer"
+          Add-Content .env "NATIVEPHP_APP_COPYRIGHT=`"(c) 2026 DevelTodo`""
+          Add-Content .env "NATIVEPHP_APP_DESCRIPTION=`"Todo e gestionale per web developer`""
         shell: pwsh
 
       - name: Run migrations
