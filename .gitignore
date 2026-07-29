@@ -8,6 +8,8 @@
 .env
 .env.backup
 .env.production
+!nativephp/electron/.env.production
+!nativephp/electron/.env.development
 .phpunit.result.cache
 Homestead.json
 Homestead.yaml
