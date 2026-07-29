@@ -158,12 +158,20 @@ jobs:
       - name: Install NativePHP
         run: php artisan native:install --force --quiet --no-interaction
 
-      - name: Build native app (macOS x64)
+      - name: Build electron plugin (TypeScript)
+        run: |
+          cd nativephp/electron/electron-plugin
+          npm install --silent 2>/dev/null || true
+          npx tsc --project tsconfig.json 2>&1 || true
+          ls -la dist/ 2>/dev/null || echo "No dist after tsc - will try npx tsc from parent"
+          cd ../..
+
+      - name: Build native app (macOS arm64)
         env:
           NATIVEPHP_APP_NAME: "DevelTodo"
           NATIVEPHP_APP_FILENAME: "develtodo"
         run: |
-          printf "2\n0\n" | php artisan native:build
+          printf "2\n1\n" | php artisan native:build
 
       - name: Find and zip macOS app
         run: |
@@ -171,27 +179,26 @@ jobs:
           if [ -d "nativephp/electron/dist" ]; then
             ls -la nativephp/electron/dist/
             ls -la nativephp/electron/dist/*.dmg 2>/dev/null || true
-            ls -la nativephp/electron/dist/*.app 2>/dev/null || true
           fi
-          # Zip the mac-unpacked or AppImage
+          # Zip the mac-unpacked
           if [ -d "nativephp/electron/dist/mac" ]; then
             echo "Zipping mac folder"
-            ditto -c -k --sequesterRsrc --keepParent "nativephp/electron/dist/mac" "develtodo-macos-x64.zip"
+            ditto -c -k --sequesterRsrc --keepParent "nativephp/electron/dist/mac" "develtodo-macos-arm64.zip"
           elif [ -d "nativephp/electron/dist/mac-unpacked" ]; then
             echo "Zipping mac-unpacked folder"
-            ditto -c -k --sequesterRsrc --keepParent "nativephp/electron/dist/mac-unpacked" "develtodo-macos-x64.zip"
+            ditto -c -k --sequesterRsrc --keepParent "nativephp/electron/dist/mac-unpacked" "develtodo-macos-arm64.zip"
           else
             echo "ERROR: No mac app folder found!"
             find nativephp/electron/dist -type d -maxdepth 2 2>/dev/null || true
             exit 1
           fi
-          ls -la develtodo-macos-x64.zip
+          ls -la develtodo-macos-arm64.zip
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: develtodo-macos-x64
-          path: develtodo-macos-x64.zip
+          name: develtodo-macos-arm64
+          path: develtodo-macos-arm64.zip
           retention-days: 30
 
   build-linux:
@@ -244,6 +251,14 @@ jobs:
 
       - name: Install NativePHP
         run: php artisan native:install --force --quiet --no-interaction
+
+      - name: Build electron plugin (TypeScript)
+        run: |
+          cd nativephp/electron/electron-plugin
+          npm install --silent 2>/dev/null || true
+          npx tsc --project tsconfig.json 2>&1 || true
+          ls -la dist/ 2>/dev/null || echo "No dist after tsc"
+          cd ../..
 
       - name: Build native app (Linux x64)
         env:
@@ -298,7 +313,7 @@ jobs:
         with:
           files: |
             develtodo-windows-x64/develtodo-windows-x64.zip
-            develtodo-macos-x64/develtodo-macos-x64.zip
+            develtodo-macos-arm64/develtodo-macos-arm64.zip
             develtodo-linux-x64/develtodo-linux-x64.zip
             develtodo-linux-x64/develtodo-linux-x64.AppImage
           draft: false
