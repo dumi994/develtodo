@@ -91,31 +91,11 @@ jobs:
             }
           }
 
-      - name: Zip the app
-        shell: pwsh
-        run: |
-          if (Test-Path "nativephp\electron\dist\win-unpacked") {
-            Write-Host "Zipping win-unpacked folder"
-            Compress-Archive -Path "nativephp\electron\dist\win-unpacked\*" -DestinationPath "develtodo-windows-x64.zip" -Force
-          } else {
-            $exe = Get-ChildItem -Path "nativephp" -Recurse -Filter "develtodo.exe" -ErrorAction SilentlyContinue | Select-Object -First 1
-            if ($exe) {
-              $appDir = $exe.DirectoryName
-              Write-Host "Found app exe: $($exe.FullName)"
-              Compress-Archive -Path "$appDir\*" -DestinationPath "develtodo-windows-x64.zip" -Force
-            } else {
-              Write-Host "ERROR: No app folder found!"
-              exit 1
-            }
-          }
-          $zipSize = (Get-Item "develtodo-windows-x64.zip").Length
-          Write-Host "Zip created: develtodo-windows-x64.zip - Size: $zipSize bytes"
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: develtodo-windows-x64
-          path: develtodo-windows-x64.zip
+          name: develtodo-windows
+          path: nativephp\electron\dist\
           retention-days: 30
 
   build-macos:
@@ -179,32 +159,11 @@ jobs:
           NATIVEPHP_APP_FILENAME: "develtodo"
         run: php artisan native:build mac --no-interaction
 
-      - name: Find and zip macOS app
-        run: |
-          echo "=== dist folder ==="
-          if [ -d "nativephp/electron/dist" ]; then
-            ls -la nativephp/electron/dist/
-            ls -la nativephp/electron/dist/*.dmg 2>/dev/null || true
-          fi
-          # Zip the mac-unpacked
-          if [ -d "nativephp/electron/dist/mac" ]; then
-            echo "Zipping mac folder"
-            ditto -c -k --sequesterRsrc --keepParent "nativephp/electron/dist/mac" "develtodo-macos-arm64.zip"
-          elif [ -d "nativephp/electron/dist/mac-unpacked" ]; then
-            echo "Zipping mac-unpacked folder"
-            ditto -c -k --sequesterRsrc --keepParent "nativephp/electron/dist/mac-unpacked" "develtodo-macos-arm64.zip"
-          else
-            echo "ERROR: No mac app folder found!"
-            find nativephp/electron/dist -type d -maxdepth 2 2>/dev/null || true
-            exit 1
-          fi
-          ls -la develtodo-macos-arm64.zip
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: develtodo-macos-arm64
-          path: develtodo-macos-arm64.zip
+          name: develtodo-macos
+          path: nativephp/electron/dist/
           retention-days: 30
 
   build-linux:
@@ -273,37 +232,11 @@ jobs:
           NATIVEPHP_APP_FILENAME: "develtodo"
         run: php artisan native:build linux --no-interaction
 
-      - name: Find and zip Linux app
-        run: |
-          echo "=== dist folder ==="
-          if [ -d "nativephp/electron/dist" ]; then
-            ls -la nativephp/electron/dist/
-          fi
-          # Zip linux-unpacked or AppImage
-          if [ -d "nativephp/electron/dist/linux-unpacked" ]; then
-            echo "Zipping linux-unpacked folder"
-            zip -r "develtodo-linux-x64.zip" "nativephp/electron/dist/linux-unpacked"
-          else
-            # Try to find AppImage
-            appimage=$(find nativephp/electron/dist -name "*.AppImage" -type f 2>/dev/null | head -1)
-            if [ -n "$appimage" ]; then
-              echo "Found AppImage: $appimage"
-              cp "$appimage" "develtodo-linux-x64.AppImage"
-            else
-              echo "ERROR: No linux app folder found!"
-              find nativephp/electron/dist -type d -maxdepth 3 2>/dev/null || true
-              exit 1
-            fi
-          fi
-          ls -la develtodo-linux-x64.*z* 2>/dev/null || ls -la develtodo-linux-x64.* 2>/dev/null || true
-
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: develtodo-linux-x64
-          path: |
-            develtodo-linux-x64.zip
-            develtodo-linux-x64.AppImage
+          name: develtodo-linux
+          path: nativephp/electron/dist/
           retention-days: 30
 
   release:
@@ -313,15 +246,24 @@ jobs:
     steps:
       - name: Download all artifacts
         uses: actions/download-artifact@v4
+        with:
+          path: dist/
+          merge-multiple: true
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Display artifacts
+        run: find dist/ -type f | sort
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
           files: |
-            develtodo-windows-x64/develtodo-windows-x64.zip
-            develtodo-macos-arm64/develtodo-macos-arm64.zip
-            develtodo-linux-x64/develtodo-linux-x64.zip
-            develtodo-linux-x64/develtodo-linux-x64.AppImage
+            dist/*.exe
+            dist/*.dmg
+            dist/*.AppImage
+            dist/*.deb
+            dist/*.zip
           draft: false
           prerelease: false
+          fail_on_unmatched_files: false
           generate_release_notes: true
