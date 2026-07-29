@@ -69,7 +69,8 @@ jobs:
           NATIVEPHP_APP_FILENAME: "develtodo"
         shell: pwsh
         run: |
-          "0", "0" | php artisan native:build
+          Set-Content -Path "$env:TEMP\native-input.txt" -Value "0`n0"
+          Get-Content "$env:TEMP\native-input.txt" | php artisan native:build
 
       - name: Find installer and exe
         shell: pwsh
