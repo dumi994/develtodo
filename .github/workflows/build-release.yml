@@ -69,7 +69,7 @@ jobs:
           NATIVEPHP_APP_FILENAME: "develtodo"
         shell: pwsh
         run: |
-          "0`n0" | php artisan native:build
+          "0", "0" | php artisan native:build
 
       - name: Find installer and exe
         shell: pwsh
