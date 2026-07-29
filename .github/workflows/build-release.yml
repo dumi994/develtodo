@@ -58,7 +58,17 @@ jobs:
         run: php artisan migrate --force
 
       - name: Install NativePHP
-        run: php artisan native:install --force --quiet --no-interaction
+        run: php artisan native:install --no-interaction
+
+      - name: Build electron plugin (TypeScript)
+        shell: pwsh
+        run: |
+          Write-Host "Building electron-plugin..."
+          Set-Location nativephp\electron\electron-plugin
+          npm install --silent 2>&1 | Out-Null
+          npx tsc --project tsconfig.json 2>&1 | Out-Null
+          if (Test-Path "dist\index.js") { Write-Host "dist/index.js OK" } else { Write-Host "WARNING: dist/index.js not found" }
+          Set-Location ..\..\..
 
       - name: Build native app (Windows x64)
         env:
@@ -154,6 +164,15 @@ jobs:
       - name: Install NativePHP
         run: php artisan native:install --no-interaction
 
+      - name: Build electron plugin (TypeScript)
+        run: |
+          echo "Building electron-plugin..."
+          cd nativephp/electron/electron-plugin
+          npm install --silent 2>/dev/null || true
+          npx tsc --project tsconfig.json 2>&1 || true
+          if [ -f "dist/index.js" ]; then echo "dist/index.js OK"; else echo "WARNING: dist/index.js not found"; fi
+          cd ../../..
+
       - name: Build native app (macOS arm64)
         env:
           NATIVEPHP_APP_NAME: "DevelTodo"
@@ -238,6 +257,15 @@ jobs:
 
       - name: Install NativePHP
         run: php artisan native:install --no-interaction
+
+      - name: Build electron plugin (TypeScript)
+        run: |
+          echo "Building electron-plugin..."
+          cd nativephp/electron/electron-plugin
+          npm install --silent 2>/dev/null || true
+          npx tsc --project tsconfig.json 2>&1 || true
+          if [ -f "dist/index.js" ]; then echo "dist/index.js OK"; else echo "WARNING: dist/index.js not found"; fi
+          cd ../../..
 
       - name: Build native app (Linux x64)
         env:
