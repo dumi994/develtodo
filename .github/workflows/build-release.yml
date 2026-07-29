@@ -63,14 +63,9 @@ jobs:
       - name: Build native app (Windows x64)
         env:
           CSC_IDENTITY_AUTO_DISCOVERY: "false"
-          WIN_CSC_LINK: ""
-          WIN_CSC_KEY_PASSWORD: ""
           NATIVEPHP_APP_NAME: "DevelTodo"
           NATIVEPHP_APP_FILENAME: "develtodo"
-        shell: pwsh
-        run: |
-          Set-Content -Path "$env:TEMP\native-input.txt" -Value "0`n0"
-          Get-Content "$env:TEMP\native-input.txt" | php artisan native:build
+        run: php artisan native:build win --no-interaction
 
       - name: Find installer and exe
         shell: pwsh
@@ -157,22 +152,13 @@ jobs:
         run: php artisan migrate --force
 
       - name: Install NativePHP
-        run: php artisan native:install --force --quiet --no-interaction
-
-      - name: Build electron plugin (TypeScript)
-        run: |
-          cd nativephp/electron/electron-plugin
-          npm install --silent 2>/dev/null || true
-          npx tsc --project tsconfig.json 2>&1 || true
-          ls -la dist/ 2>/dev/null || echo "No dist after tsc - will try npx tsc from parent"
-          cd ../..
+        run: php artisan native:install --no-interaction
 
       - name: Build native app (macOS arm64)
         env:
           NATIVEPHP_APP_NAME: "DevelTodo"
           NATIVEPHP_APP_FILENAME: "develtodo"
-        run: |
-          printf "2\n1\n" | php artisan native:build
+        run: php artisan native:build mac --no-interaction
 
       - name: Find and zip macOS app
         run: |
@@ -251,22 +237,13 @@ jobs:
         run: php artisan migrate --force
 
       - name: Install NativePHP
-        run: php artisan native:install --force --quiet --no-interaction
-
-      - name: Build electron plugin (TypeScript)
-        run: |
-          cd nativephp/electron/electron-plugin
-          npm install --silent 2>/dev/null || true
-          npx tsc --project tsconfig.json 2>&1 || true
-          ls -la dist/ 2>/dev/null || echo "No dist after tsc"
-          cd ../..
+        run: php artisan native:install --no-interaction
 
       - name: Build native app (Linux x64)
         env:
           NATIVEPHP_APP_NAME: "DevelTodo"
           NATIVEPHP_APP_FILENAME: "develtodo"
-        run: |
-          printf "1\n0\n" | php artisan native:build
+        run: php artisan native:build linux --no-interaction
 
       - name: Find and zip Linux app
         run: |
