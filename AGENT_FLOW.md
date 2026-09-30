@@ -1,8 +1,8 @@
-# Agent Development Workflow — LexManager Prototyping
+# Agent Development Workflow — DevelTodo
 
 ## Istruzioni Operative Generali
 
-Questo flusso va eseguito in **loop continuo** per ogni singolo sotto-task della tabella di marcia.
+Questo flusso va eseguito in **loop continuo** per ogni singolo sotto-task della tabella di marcia (`.specs/plans/feature-*.md`).
 L'agente **non deve passare al sotto-task successivo** finché quello corrente non è stato:
 
 1. Sviluppato
@@ -23,27 +23,29 @@ git checkout -b feature-<nome-sotto-task>
 
 ---
 
-## Step 2 — Sviluppo e Mocking Visivo
+## Step 2 — Sviluppo
 
-Implementa **esclusivamente** la singola feature visiva richiesta dal sotto-task corrente.
+Implementa **esclusivamente** la singola feature richiesta dal sotto-task corrente.
 
-| Vincolo                 | Regola                                      |
-| ----------------------- | ------------------------------------------- |
-| **Lingua del codice**   | Inglese (classi, ID, variabili, attributi)  |
-| **Lingua dei commenti** | Italiano                                    |
-| **Stack tecnologico**   | Solo HTML statico, Tailwind CSS e Alpine.js |
-| **Divieto assoluto**    | Nessun file PHP o logica backend            |
+| Vincolo                 | Regola                                                       |
+| ----------------------- | ------------------------------------------------------------ |
+| **Lingua del codice**   | Inglese (classi, ID, variabili, attributi)                   |
+| **Lingua dei commenti** | Italiano                                                     |
+| **Stack tecnologico**   | Laravel 11+ / PHP 8.2+ / Blade + Tailwind + Alpine.js / NativePHP (Electron) / SQLite |
+| **Database**            | SQLite + migrazioni in `database/migrations/`                |
+| **Test**                | Aggiungere/aggiornare i test Feature in `tests/Feature/` quando la feature ha logica backend |
 
 ---
 
 ## Step 3 — Test di Funzionamento
 
-Prima di procedere al commit, verificare sul browser che:
+Prima di procedere al commit:
 
-- [ ] La feature sia **completamente interattiva** (es. i click aprono le modali, i tab cambiano vista)
-- [ ] La console sviluppatori del browser riporti **zero errori** (nessun crash JavaScript, nessuna variabile null)
+- [ ] Se c'è logica backend: `php artisan test` (oppure `vendor/bin/phpunit`) — rosso prima, verde dopo
+- [ ] Se c'è UI: pagina **completamente interattiva** nel browser (clic, modali, tab)
+- [ ] La console sviluppatori del browser riporta **zero errori**
 
-Se anche uno solo dei due controlli fallisce, tornare allo Step 2 e correggere.
+Se anche uno solo dei controlli fallisce, tornare allo Step 2 e correggere.
 
 ---
 
@@ -51,18 +53,21 @@ Se anche uno solo dei due controlli fallisce, tornare allo Step 2 e correggere.
 
 Selezionare **solo ed esclusivamente** i file che compongono la funzionalità appena completata.
 
-Usare sempre git add <file> con il percorso esplicito. Mai git add .
+Usare sempre `git add <file>` con il percorso esplicito. **Mai `git add .`**
 
 ```bash
 # Verifica i file modificati
 git status
 
 # Aggiungi solo i file della feature corrente
-git add resources/views/<file-modificato>.html
+git add app/Http/Controllers/<file>.php
+git add resources/views/<file>.blade.php
 
-# Esegui il commit atomico seguendo i Conventional Commits
-git commit -m "<prefisso>: descrizione in inglese della singola feature visiva"
+# Commit atomico con Conventional Commits
+git commit -m "<prefisso>: <descrizione in inglese della singola feature>"
 ```
+
+Prefissi usati: `feat:` · `fix:` · `refactor:` · `docs:` · `style:` · `test:` · `chore:` · `build(ci):`
 
 ---
 
@@ -88,15 +93,15 @@ Dopo questo step, il ciclo ricomincia dallo **Step 1** con il sotto-task success
 
 ---
 
+## Note sul Desktop (NativePHP)
+
+- Il packaging vive in `nativephp/electron/` (src, electron-builder.mjs, package.json)
+- Prima di una build nativa servono gli asset compilati: `npm run build`
+- Build desktop: `php artisan native:build win --no-interaction`
+- La release multi-OS (Windows/macOS/Linux) è gestita dal workflow CI `.github/workflows/build-release.yml`
+
+---
+
 ## Tabella di Marcia dei Sotto-Task
 
-L'agente deve seguire **tassativamente** questo ordine di esecuzione.
-
-| #   | Sotto-task Atomico             | Branch da Creare                   | Prefisso e Messaggio di Commit                                     |
-| --- | ------------------------------ | ---------------------------------- | ------------------------------------------------------------------ |
-| 1   | Setup Layout e Sidebar globale | `feature-1-sidebar-layout`         | `style: implement global sidebar and layout scaffolding`           |
-| 2   | Vista Clienti e Modale Mock    | `feature-2-clients-view`           | `style: build static clients list with mock creation modal`        |
-| 3   | Vista Pratiche e Badge Aree    | `feature-3-cases-view`             | `style: render legal cases view with area category tags`           |
-| 4   | Calendario e Badge di Colore   | `feature-4-calendar-grid`          | `feat: integrate visual calendar grid with color-coded events`     |
-| 5   | Interattività Dettaglio/Edit   | `feature-5-calendar-interactivity` | `feat: add client-side modal for editing and completing events`    |
-| 6   | Dashboard e Filtri Alpine.js   | `feature-6-dashboard-filters`      | `feat: implement real-time dashboard filters for dates and status` |
+La roadmap aggiornata è in `.specs/plans/` — ogni file `feature-NN-*.md` definisce obiettivo, file in scope, step e criteri di accettazione. L'ordine di esecuzione è l'ordine numerico dei file.

@@ -9,6 +9,7 @@ class ProjectController extends Controller
 {
     public function index()
     {
+        // Ordina per stato (workflow) e, a parità di stato, per data di scadenza
         $orderMap = [
             'in_corso' => 1,
             'in_revisione' => 2,
@@ -20,9 +21,8 @@ class ProjectController extends Controller
         $projects = Project::where('user_id', auth()->id())
             ->get()
             ->sortBy(function ($p) use ($orderMap) {
-                return $orderMap[$p->status] ?? 99;
-            })
-            ->sortBy('due_date');
+                return [$orderMap[$p->status] ?? 99, $p->due_date ?? ''];
+            });
 
         return view('projects.index', compact('projects'));
     }
