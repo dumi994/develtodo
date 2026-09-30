@@ -1,10 +1,12 @@
 {
-    "name": "laravel/laravel",
+    "name": "develtodo/develtodo",
     "type": "project",
-    "description": "The skeleton application for the Laravel framework.",
+    "description": "DevelTodo — desktop todo e gestionale per web developer freelance (Laravel + NativePHP).",
     "keywords": [
         "laravel",
-        "framework"
+        "todo",
+        "desktop",
+        "nativephp"
     ],
     "license": "MIT",
     "require": {
