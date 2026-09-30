@@ -17,8 +17,10 @@ class SearchController extends Controller
         $results = [];
 
         $projects = \App\Models\Project::where('user_id', auth()->id())
-            ->where('name', 'like', "%{$q}%")
-            ->orWhere('client', 'like', "%{$q}%")
+            ->where(function ($query) use ($q) {
+                $query->where('name', 'like', "%{$q}%")
+                    ->orWhere('client', 'like', "%{$q}%");
+            })
             ->get();
 
         foreach ($projects as $p) {
@@ -46,8 +48,10 @@ class SearchController extends Controller
         }
 
         $tickets = \App\Models\Ticket::where('user_id', auth()->id())
-            ->where('subject', 'like', "%{$q}%")
-            ->orWhere('client', 'like', "%{$q}%")
+            ->where(function ($query) use ($q) {
+                $query->where('subject', 'like', "%{$q}%")
+                    ->orWhere('client', 'like', "%{$q}%");
+            })
             ->get();
 
         foreach ($tickets as $t) {
@@ -75,8 +79,10 @@ class SearchController extends Controller
         }
 
         $invoices = \App\Models\Invoice::where('user_id', auth()->id())
-            ->where('client', 'like', "%{$q}%")
-            ->orWhere('number', 'like', "%{$q}%")
+            ->where(function ($query) use ($q) {
+                $query->where('client', 'like', "%{$q}%")
+                    ->orWhere('number', 'like', "%{$q}%");
+            })
             ->get();
 
         foreach ($invoices as $i) {
